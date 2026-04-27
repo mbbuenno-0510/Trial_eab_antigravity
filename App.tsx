@@ -57,6 +57,7 @@ const AppContent: React.FC = () => {
     // 🆕 Estado para o perfil da criança ativa (necessário para a sala da calma)
     const [activeChildProfile, setActiveChildProfile] = useState<ChildExtendedProfile | null>(null);
     const [showPWAHint, setShowPWAHint] = useState(false);
+    const [installPlatform, setInstallPlatform] = useState<'ios' | 'android' | 'windows'>('ios');
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -187,7 +188,7 @@ const AppContent: React.FC = () => {
     };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
-    if (!currentUser) return <Auth onLoginSuccess={() => {}} onShowPWAHint={() => setShowPWAHint(true)} />;
+    if (!currentUser) return <Auth onLoginSuccess={() => {}} onShowPWAHint={(platform) => { setInstallPlatform(platform || 'ios'); setShowPWAHint(true); }} />;
 
     const renderView = () => {
         if (userProfile?.profileType === ProfileType.PROFESSIONAL) {
@@ -239,7 +240,7 @@ const AppContent: React.FC = () => {
         <div className="h-[100dvh] bg-slate-50 flex md:flex-row flex-col font-sans overflow-hidden">
             <NotificationPopup visible={notification.visible} message={notification.message} onClose={() => setNotification(prev => ({...prev, visible: false}))} />
             {userProfile && <GlobalAlarmMonitor userProfile={userProfile} />}
-            <PWAInstallHint isOpen={showPWAHint} onClose={() => setShowPWAHint(false)} />
+            <PWAInstallHint isOpen={showPWAHint} onClose={() => setShowPWAHint(false)} platform={installPlatform} />
             
             <aside className="hidden md:flex w-20 lg:w-64 bg-white border-r border-slate-200 flex-col py-6 z-20 shadow-md transition-all duration-300">
                 <div className="mb-8 px-4 flex items-center justify-center lg:justify-start gap-3"><div className={`w-10 h-10 rounded-xl flex items-center justify-center text-2xl shadow-sm border ${isHealth ? 'bg-teal-50 border-teal-100' : isSchool ? 'bg-purple-50 border-purple-100' : 'bg-gradient-to-br from-blue-100 to-indigo-100'}`}>{isHealth ? '🩺' : isSchool ? '🎓' : '🤖'}</div><span className="text-xl font-black text-slate-800 tracking-tight hidden lg:block">EAB</span></div>

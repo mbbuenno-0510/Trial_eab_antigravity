@@ -38,11 +38,10 @@ export function usePWAInstall() {
             }
 
             if (isWindows) {
-                alert("O navegador bloqueou a mensagem automática (provavelmente porque você já instalou ou fechou a janela antes).\n\nPara instalar agora no Windows:\n1. Clique no ícone de instalação (monitor com seta) na barra de endereços do navegador.\n2. Ou clique nos 'Três Pontos' do menu e escolha 'Salvar e Compartilhar' -> 'Instalar Aplicativo'.");
+                return 'windows';
             } else {
-                alert("O navegador bloqueou a mensagem automática (pode ser cache ou você já fechou o aviso antes).\n\nPara forçar a instalação no Android/Chrome:\nClique nos TRÊS PONTOS do navegador no canto superior direito e escolha 'Instalar aplicativo' ou 'Adicionar à tela inicial'.");
+                return 'android';
             }
-            return;
         }
 
         // Show the prompt

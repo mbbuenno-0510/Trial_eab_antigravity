@@ -26,6 +26,11 @@ const pastel = {
 
 const HEALTH_COUNCILS = ['CRM', 'CRP', 'CREFITO', 'CRF', 'COREN', 'Outros'];
 
+interface AuthProps {
+  onLoginSuccess: () => void;
+  onShowPWAHint?: (platform?: 'ios' | 'android' | 'windows') => void;
+}
+
 const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
   const [view, setView] = useState<AuthView>('LOGIN');
   const [showLanding, setShowLanding] = useState(false);
@@ -416,11 +421,14 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
             <RobotMascot 
               mood={MoodType.HAPPY} 
               isInstallable={isInstallable && !isStandalone}
-              onInstallClick={() => {
+              onInstallClick={async () => {
                 if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-                  if (onShowPWAHint) onShowPWAHint();
+                  if (onShowPWAHint) onShowPWAHint('ios');
                 } else {
-                  installPWA();
+                  const fallbackPlatform = await installPWA();
+                  if (fallbackPlatform && onShowPWAHint) {
+                    onShowPWAHint(fallbackPlatform as 'android' | 'windows');
+                  }
                 }
               }}
             />
