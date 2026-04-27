@@ -1,0 +1,110 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- REUSABLE HELPERS ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // Relationship Helpers
+    function isGuardianOf(childUid) {
+      return isSignedIn() && childUid in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.manages;
+    }
+    
+    function isLinkedGuardian(childUid) {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(childUid)).data.linkedGuardianId == request.auth.uid;
+    }
+
+    function canAccessChildData(childUid) {
+      return isOwner(childUid) || isGuardianOf(childUid) || isLinkedGuardian(childUid);
+    }
+
+    // --- COLLECTION RULES ---
+
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid);
+      
+      match /child_profile/main {
+        allow read: if canAccessChildData(uid) || isAuthorizedProfessional(uid) || isAuthorizedSchool(uid);
+        allow write: if canAccessChildData(uid);
+      }
+
+      match /mood_entries/{id} {
+        allow read, write, list: if canAccessChildData(uid);
+      }
+
+      match /behavior_entries/{id} {
+        allow read, list: if canAccessChildData(uid) || isAuthorizedProfessional(uid) || isAuthorizedSchool(uid);
+        allow write: if canAccessChildData(uid) || isAuthorizedSchool(uid);
+      }
+
+      match /medications/{id} {
+        allow read, list: if canAccessChildData(uid) || isAuthorizedSchool(uid);
+        allow write: if canAccessChildData(uid);
+      }
+
+      match /appointments/{id} {
+        allow read, write: if canAccessChildData(uid);
+      }
+
+      match /therapies/{id} {
+        allow read, write: if canAccessChildData(uid);
+      }
+
+      match /documents/{id} {
+        allow read: if canAccessChildData(uid) || isAuthorizedProfessional(uid);
+        allow write: if canAccessChildData(uid);
+      }
+
+      match /routine_items/{id} {
+        allow read, write: if canAccessChildData(uid);
+      }
+      match /routine_logs/{id} {
+        allow read, write: if canAccessChildData(uid);
+      }
+
+      match /therapeutic_goals/{id} {
+        allow read: if canAccessChildData(uid) || isAuthorizedProfessional(uid);
+        allow write: if isAuthorizedProfessional(uid);
+      }
+      match /session_logs/{id} {
+        allow read: if canAccessChildData(uid) || isAuthorizedProfessional(uid);
+        allow write: if isAuthorizedProfessional(uid);
+      }
+
+      match /school_logs/{id} {
+        allow read: if canAccessChildData(uid) || isAuthorizedSchool(uid);
+        allow write: if isAuthorizedSchool(uid);
+      }
+      match /school_med_logs/{id} {
+        allow read: if canAccessChildData(uid) || isAuthorizedSchool(uid);
+        allow write: if isAuthorizedSchool(uid);
+      }
+    }
+
+    // --- CROSS-ENTITY ACCESS HELPERS (SIMPLIFIED) ---
+    
+    function isAuthorizedProfessional(childUid) {
+      // Simplified: Check if professional is in a list of allowed IDs stringified
+      // For now, we will allow read if they are Health profile and child has isVisibleToHealth enabled.
+      // A more robust check would require a flat list of UIDs or IDs.
+      let childProfile = get(/databases/$(database)/documents/users/$(childUid)/child_profile/main).data;
+      let professional = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return childProfile.isVisibleToHealth == true && professional.profileType == 'Health';
+    }
+
+    function isAuthorizedSchool(childUid) {
+      let childProfile = get(/databases/$(database)/documents/users/$(childUid)/child_profile/main).data;
+      let school = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return childProfile.isVisibleToSchool == true && school.profileType == 'School';
+    }
+  }
+}

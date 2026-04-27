@@ -1,0 +1,8 @@
+{
+  "name": "EAB Master - Ecossistema TEA",
+  "description": "Um ecossistema digital completo para gestão de cuidados, rotinas e saúde para indivíduos no espectro autista, seus responsáveis e profissionais de saúde.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}

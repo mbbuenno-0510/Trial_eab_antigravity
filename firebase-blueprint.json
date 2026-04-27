@@ -1,0 +1,209 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Core profile data for all user types.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "profileType": { "type": "string", "enum": ["CHILD", "ADULT", "Health", "School"] },
+        "manages": { "type": "array", "items": { "type": "string" } },
+        "linkedGuardianId": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "profileType"]
+    },
+    "ChildProfile": {
+      "title": "Extended Child Profile",
+      "description": "Detailed clinical and sensory data for a child.",
+      "type": "object",
+      "properties": {
+        "childName": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "teaLevel": { "type": "string", "enum": ["1", "2", "3"] },
+        "sensoryConfig": { "type": "object" },
+        "isVisibleToHealth": { "type": "boolean" },
+        "isVisibleToSchool": { "type": "boolean" }
+      }
+    },
+    "MoodEntry": {
+      "title": "Mood Log",
+      "description": "Daily mood tracking entry.",
+      "type": "object",
+      "properties": {
+        "mood": { "type": "string" },
+        "notes": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "dateString": { "type": "string" }
+      }
+    },
+    "BehaviorEntry": {
+      "title": "Behavior Log",
+      "description": "Detailed behavioral event log.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "intensity": { "type": "string" },
+        "description": { "type": "string" },
+        "timestamp": { "type": "number" }
+      }
+    },
+    "Medication": {
+      "title": "Medication",
+      "description": "Medication configuration and stock.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "stock": { "type": "number" },
+        "minStock": { "type": "number" },
+        "altoCusto": { "type": "boolean" },
+        "administeredAtSchool": { "type": "boolean" }
+      }
+    },
+    "Appointment": {
+      "title": "Medical Appointment",
+      "description": "One-time or recurring medical appointment.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" }
+      }
+    },
+    "Therapy": {
+      "title": "Therapy Session",
+      "description": "Weekly recurring therapy session.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "dayOfWeek": { "type": "number" },
+        "time": { "type": "string" },
+        "tasks": { "type": "array" }
+      }
+    },
+    "StoredDocument": {
+      "title": "Document",
+      "description": "Metadata for uploaded files/documents.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "downloadUrl": { "type": "string" },
+        "uploadedAt": { "type": "number" }
+      }
+    },
+    "RoutineItem": {
+      "title": "Routine Item",
+      "description": "Configuration for a recurring routine task.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "period": { "type": "string", "enum": ["Manhã", "Tarde", "Noite"] }
+      }
+    },
+    "RoutineLog": {
+      "title": "Routine Log",
+      "description": "History of completed routines.",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string" },
+        "date": { "type": "string" }
+      }
+    },
+    "TherapeuticGoal": {
+      "title": "Therapeutic Goal",
+      "description": "Goal set by a health professional.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "SessionLog": {
+      "title": "Professional Session Log",
+      "description": "Clinical notes for a specific session.",
+      "type": "object",
+      "properties": {
+        "notes": { "type": "string" },
+        "timestamp": { "type": "number" }
+      }
+    },
+    "SchoolLog": {
+      "title": "Daily School Log",
+      "description": "Teacher's report on student's day.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "socialInteraction": { "type": "string" }
+      }
+    },
+    "SchoolMedicationLog": {
+      "title": "School Medication Administration Log",
+      "description": "Record of medicine given at school.",
+      "type": "object",
+      "properties": {
+        "medicationName": { "type": "string" },
+        "timestamp": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{uid}": {
+      "schema": "User",
+      "description": "User profile document."
+    },
+    "users/{uid}/child_profile/main": {
+      "schema": "ChildProfile",
+      "description": "Extended profile for child users."
+    },
+    "users/{uid}/mood_entries/{id}": {
+      "schema": "MoodEntry",
+      "description": "Daily mood logs."
+    },
+    "users/{uid}/behavior_entries/{id}": {
+      "schema": "BehaviorEntry",
+      "description": "Behavioral event entries."
+    },
+    "users/{uid}/medications/{id}": {
+      "schema": "Medication",
+      "description": "Configured medications."
+    },
+    "users/{uid}/appointments/{id}": {
+      "schema": "Appointment",
+      "description": "Medical agenda."
+    },
+    "users/{uid}/therapies/{id}": {
+      "schema": "Therapy",
+      "description": "Weekly therapy schedule."
+    },
+    "users/{uid}/documents/{id}": {
+      "schema": "StoredDocument",
+      "description": "Uploaded health documents."
+    },
+    "users/{uid}/routine_items/{id}": {
+      "schema": "RoutineItem",
+      "description": "Daily routine items."
+    },
+    "users/{uid}/routine_logs/{id}": {
+      "schema": "RoutineLog",
+      "description": "Execution history of routines."
+    },
+    "users/{uid}/therapeutic_goals/{id}": {
+      "schema": "TherapeuticGoal",
+      "description": "Clinical goals for the patient."
+    },
+    "users/{uid}/session_logs/{id}": {
+      "schema": "SessionLog",
+      "description": "Professional session notes."
+    },
+    "users/{uid}/school_logs/{id}": {
+      "schema": "SchoolLog",
+      "description": "Daily behavior reports from school."
+    },
+    "users/{uid}/school_med_logs/{id}": {
+      "schema": "SchoolMedicationLog",
+      "description": "School administration history for medications."
+    }
+  }
+}
