@@ -141,22 +141,15 @@ const RobotMascot: React.FC<RobotMascotProps> = ({
                 <path d="M12 12l0 3" />
                 <path d="M10 14l2 2 2-2" />
               </g>
-              {/* Instrução de instalação */}
-              <text x="60" y="145" textAnchor="middle" className="text-[8px] font-black fill-indigo-600 animate-pulse uppercase tracking-tighter" style={{ pointerEvents: 'none' }}>Clique para instalar</text>
-            </>
-          ) : (
-            <>
-              <circle cx="60" cy="100" r="8" fill="#10B981" className={`robot-speaker-dot ${isSpeaking ? 'speaking' : ''} ${isLoading ? 'loading' : ''}`} />
-              {!isSpeaking && !isLoading && onSpeakerClick && (
-                <path d="M58 96 L 65 100 L 58 104 Z" fill="white" style={{ pointerEvents: 'none' }} />
-              )}
-            </>
-          )}
-        </g>
         <g className="legs">
           <rect x="35" y="130" width="20" height="15" rx="8" fill="url(#metallicGradient)" />
           <rect x="65" y="130" width="20" height="15" rx="8" fill="url(#metallicGradient)" />
         </g>
+
+        {/* Instrução de instalação - Movida para o final para ficar sempre no topo */}
+        {isInstallable && (
+          <text x="60" y="148" textAnchor="middle" className="text-[9px] font-black fill-indigo-600 animate-pulse uppercase tracking-tighter" style={{ pointerEvents: 'none' }}>Clique para instalar</text>
+        )}
       </svg>
     </div>
   );
