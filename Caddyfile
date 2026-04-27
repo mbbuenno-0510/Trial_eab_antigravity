@@ -1,0 +1,17 @@
+:80 {
+    root * /srv/dist
+    file_server
+
+    # Garante que o Manifesto seja lido como JSON de PWA
+    header /manifest.json Content-Type application/manifest+json
+
+    # Previne que arquivos estáticos caiam no fallback do React
+    @static {
+        file
+        path *.ico *.js *.css *.png *.json *.jpg *.woff2
+    }
+    header @static Cache-Control max-age=31536000
+
+    # Se não for um arquivo real (como uma rota do app), manda para o index.html
+    try_files {path} /index.html
+}
