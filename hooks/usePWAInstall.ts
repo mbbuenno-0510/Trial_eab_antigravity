@@ -19,19 +19,6 @@ export function usePWAInstall() {
             e.preventDefault();
             setDeferredPrompt(e);
             setIsInstallable(true);
-
-            // AUTO-PROMPT: Mais agressivo para Android
-            const triggerPrompt = () => {
-                if (e && /Android/i.test(navigator.userAgent)) {
-                    console.log('🚀 Attempting auto-prompt on interaction');
-                    e.prompt();
-                }
-                window.removeEventListener('touchstart', triggerPrompt);
-                window.removeEventListener('click', triggerPrompt);
-            };
-
-            window.addEventListener('touchstart', triggerPrompt, { once: true });
-            window.addEventListener('click', triggerPrompt, { once: true });
         };
 
         console.log('⏳ Listening for beforeinstallprompt...');
