@@ -41,8 +41,19 @@ export function usePWAInstall() {
 
     const installPWA = async () => {
         if (!deferredPrompt) {
-            // Fallback for browsers that don't support beforeinstallprompt (like iOS)
-            alert("Para instalar:\n\nNo iPhone/iPad: Toque no ícone de compartilhar (seta para cima) e escolha 'Adicionar à Tela de Início'.\n\nNo Android/Chrome: Clique nos três pontos do navegador e escolha 'Instalar aplicativo'.");
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+            const isWindows = /Win/i.test(navigator.userAgent);
+            
+            if (isIOS) {
+                // No iOS o onInstallClick já chama o modal bonito, mas deixamos aqui por segurança
+                return;
+            }
+
+            if (isWindows) {
+                alert("Para instalar no Windows:\n\n1. Clique no ícone de instalação (monitor com seta) na barra de endereços do navegador.\n2. Ou clique nos 'Três Pontos' do menu e escolha 'Salvar e Compartilhar' -> 'Instalar Aplicativo'.");
+            } else {
+                alert("Para instalar:\n\nNo Android/Chrome: Clique nos três pontos do navegador e escolha 'Instalar aplicativo'.");
+            }
             return;
         }
 
