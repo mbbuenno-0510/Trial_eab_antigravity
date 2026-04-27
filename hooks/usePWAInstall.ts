@@ -15,23 +15,26 @@ export function usePWAInstall() {
         }
 
         const handler = (e: any) => {
+            console.log('✅ PWA beforeinstallprompt event fired');
             e.preventDefault();
             setDeferredPrompt(e);
             setIsInstallable(true);
 
-            // AUTO-PROMPT: Try to show the prompt on the very first click on the document
-            const autoPrompt = () => {
-                if (e) {
-                    // Only auto-prompt on Android/Chrome where it's supported
-                    if (/Android/i.test(navigator.userAgent)) {
-                        e.prompt();
-                    }
-                    window.removeEventListener('click', autoPrompt);
+            // AUTO-PROMPT: Mais agressivo para Android
+            const triggerPrompt = () => {
+                if (e && /Android/i.test(navigator.userAgent)) {
+                    console.log('🚀 Attempting auto-prompt on interaction');
+                    e.prompt();
                 }
+                window.removeEventListener('touchstart', triggerPrompt);
+                window.removeEventListener('click', triggerPrompt);
             };
-            window.addEventListener('click', autoPrompt, { once: true });
+
+            window.addEventListener('touchstart', triggerPrompt, { once: true });
+            window.addEventListener('click', triggerPrompt, { once: true });
         };
 
+        console.log('⏳ Listening for beforeinstallprompt...');
         window.addEventListener('beforeinstallprompt', handler);
 
         return () => {

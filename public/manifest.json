@@ -3,6 +3,7 @@
   "short_name": "EAB",
   "description": "Sistema de Gestão Diária e Terapêutica",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#0d9488",
