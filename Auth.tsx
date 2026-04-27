@@ -412,35 +412,18 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
         }}
       >
         <div className="flex flex-col items-center mb-6">
-          <div className="flex items-center justify-center gap-2 md:gap-6 mb-2">
-            <div className="transform scale-90 md:scale-100">
-              <RobotMascot 
-                mood={MoodType.HAPPY} 
-                isInstallable={false}
-              />
-            </div>
-            
-            {!isStandalone && isInstallable && (
-              <button 
-                onClick={() => {
-                  if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-                    if (onShowPWAHint) onShowPWAHint();
-                  } else {
-                    installPWA();
-                  }
-                }}
-                className="group flex flex-col items-center gap-2 bg-gradient-to-br from-indigo-500 to-purple-600 p-4 rounded-3xl shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 border-2 border-white/50"
-              >
-                <div className="bg-white/20 p-2 rounded-xl group-hover:rotate-12 transition-transform">
-                  <Smartphone className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-center">
-                  <span className="block text-[10px] font-bold text-indigo-100 uppercase tracking-widest leading-none">Aplicativo</span>
-                  <span className="block text-sm font-black text-white leading-tight">INSTALAR</span>
-                </div>
-                <div className="w-8 h-1 bg-white/30 rounded-full group-hover:w-full transition-all"></div>
-              </button>
-            )}
+          <div className="transform scale-75 mb-[-10px]">
+            <RobotMascot 
+              mood={MoodType.HAPPY} 
+              isInstallable={isInstallable && !isStandalone}
+              onInstallClick={() => {
+                if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                  if (onShowPWAHint) onShowPWAHint();
+                } else {
+                  installPWA();
+                }
+              }}
+            />
           </div>
           <h1 className="text-4xl font-black tracking-tighter mb-1 text-slate-900 drop-shadow-sm" style={{ color: pastel.blue }}>EAB</h1>
           <p className="text-slate-600 font-bold text-center text-sm px-4">

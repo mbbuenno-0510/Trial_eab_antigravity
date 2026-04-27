@@ -130,17 +130,33 @@ const RobotMascot: React.FC<RobotMascotProps> = ({
           <rect x="20" y="70" width="80" height="60" rx="20" fill="url(#metallicGradient)" />
           <rect x="20" y="70" width="80" height="60" rx="20" fill={moodColor} fillOpacity="0.5" style={{ transition: 'fill 0.5s ease-in-out' }} />
           
+          <circle cx="60" cy="100" r="22" fill="white" fillOpacity="0.3" stroke="white" strokeWidth="1" strokeDasharray="2 2" className={isInstallable ? "animate-spin-slow" : ""} />
           <circle cx="60" cy="100" r="18" fill="#F9FAFB" stroke="#E5E7EB" strokeWidth="2" className="transition-all group-hover:scale-110" />
           
-          <circle cx="60" cy="100" r="8" fill="#10B981" className={`robot-speaker-dot ${isSpeaking ? 'speaking' : ''} ${isLoading ? 'loading' : ''}`} />
-          {!isSpeaking && !isLoading && onSpeakerClick && (
-            <path d="M58 96 L 65 100 L 58 104 Z" fill="white" style={{ pointerEvents: 'none' }} />
+          {isInstallable ? (
+            <g transform="translate(52, 92) scale(0.65)" stroke="#4F46E5" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+              <path d="M12 18h.01" />
+              <path d="M12 12l0 3" />
+              <path d="M10 14l2 2 2-2" />
+            </g>
+          ) : (
+            <>
+              <circle cx="60" cy="100" r="8" fill="#10B981" className={`robot-speaker-dot ${isSpeaking ? 'speaking' : ''} ${isLoading ? 'loading' : ''}`} />
+              {!isSpeaking && !isLoading && onSpeakerClick && (
+                <path d="M58 96 L 65 100 L 58 104 Z" fill="white" style={{ pointerEvents: 'none' }} />
+              )}
+            </>
           )}
         </g>
         <g className="legs">
           <rect x="35" y="130" width="20" height="15" rx="8" fill="url(#metallicGradient)" />
           <rect x="65" y="130" width="20" height="15" rx="8" fill="url(#metallicGradient)" />
         </g>
+
+        {isInstallable && (
+          <text x="60" y="148" textAnchor="middle" className="text-[9px] font-black fill-indigo-600 animate-pulse uppercase tracking-tighter" style={{ pointerEvents: 'none' }}>Clique para instalar</text>
+        )}
       </svg>
     </div>
   );
