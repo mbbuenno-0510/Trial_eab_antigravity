@@ -416,14 +416,7 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
             <div className="transform scale-90 md:scale-100">
               <RobotMascot 
                 mood={MoodType.HAPPY} 
-                isInstallable={isInstallable && !isStandalone}
-                onInstallClick={() => {
-                  if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-                    if (onShowPWAHint) onShowPWAHint();
-                  } else {
-                    installPWA();
-                  }
-                }}
+                isInstallable={false}
               />
             </div>
             
