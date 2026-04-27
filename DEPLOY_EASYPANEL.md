@@ -28,6 +28,9 @@ O projeto agora está conectado ao seu repositório GitHub, o que permite que ca
 3. Na aba **"Domains"**, o EasyPanel deve detectar a porta **80** automaticamente.
 4. Clique em **"Deploy"**.
 
+> [!TIP]
+> Se o seu EasyPanel estiver usando **Caddy** em vez de Nginx, eu adicionei um arquivo `Caddyfile` no repositório que já configura os tipos de arquivo (MIME types) corretamente para que o PWA seja reconhecido pelo Android e Windows.
+
 ## Benefícios desta configuração:
 *   **Atualização Automática**: Qualquer melhoria que eu fizer no código e você enviar para o GitHub será refletida no site em poucos minutos.
 *   **Segurança**: O arquivo `.env` está no seu `.gitignore`, então suas chaves nunca ficarão expostas no GitHub público, apenas no ambiente seguro do EasyPanel.
