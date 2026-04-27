@@ -134,13 +134,21 @@ const RobotMascot: React.FC<RobotMascotProps> = ({
           <circle cx="60" cy="100" r="18" fill="#F9FAFB" stroke="#E5E7EB" strokeWidth="2" className="transition-all group-hover:scale-110" />
           
           {isInstallable ? (
+            <g transform="translate(52, 92) scale(0.65)" stroke="#4F46E5" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+              <path d="M12 18h.01" />
+              <path d="M12 12l0 3" />
+              <path d="M10 14l2 2 2-2" />
+            </g>
+          ) : (
             <>
-              <g transform="translate(52, 92) scale(0.65)" stroke="#4F46E5" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                <path d="M12 18h.01" />
-                <path d="M12 12l0 3" />
-                <path d="M10 14l2 2 2-2" />
-              </g>
+              <circle cx="60" cy="100" r="8" fill="#10B981" className={`robot-speaker-dot ${isSpeaking ? 'speaking' : ''} ${isLoading ? 'loading' : ''}`} />
+              {!isSpeaking && !isLoading && onSpeakerClick && (
+                <path d="M58 96 L 65 100 L 58 104 Z" fill="white" style={{ pointerEvents: 'none' }} />
+              )}
+            </>
+          )}
+        </g>
         <g className="legs">
           <rect x="35" y="130" width="20" height="15" rx="8" fill="url(#metallicGradient)" />
           <rect x="65" y="130" width="20" height="15" rx="8" fill="url(#metallicGradient)" />
