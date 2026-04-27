@@ -9,9 +9,10 @@ export function usePWAInstall() {
         const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
         setIsStandalone(standalone);
 
-        // No iOS, mostramos como instalável imediatamente pois não existe evento nativo.
-        // No Android/Windows, só mostraremos como instalável DEPOIS que o evento disparar.
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        
+        // No iOS, como o evento nunca dispara, forçamos a interface de instalação a aparecer para podermos mostrar as instruções manuais.
+        // Nos outros (Android/Windows), só mostramos a interface de instalação QUANDO o navegador de fato disparar o evento, garantindo que o prompt nativo vai funcionar.
         if (isIOS && !standalone) {
             setIsInstallable(true);
         }
@@ -40,11 +41,11 @@ export function usePWAInstall() {
                 return;
             }
 
-            // Removidas as instruções manuais para Android e Windows a pedido do usuário.
-            // O objetivo é ter apenas a mensagem nativa "Deseja instalar?".
-            // Se chegou aqui e não tem deferredPrompt, o navegador ainda não liberou a instalação
-            // (ex: ainda carregando, falta de HTTPS, ou já está instalado).
-            console.log("Aguardando o navegador liberar a instalação nativa...");
+            if (isWindows) {
+                alert("Para instalar no Windows:\n\n1. Clique no ícone de instalação (monitor com seta) na barra de endereços do navegador.\n2. Ou clique nos 'Três Pontos' do menu e escolha 'Salvar e Compartilhar' -> 'Instalar Aplicativo'.");
+            } else {
+                alert("Para instalar:\n\nNo Android/Chrome: Clique nos três pontos do navegador e escolha 'Instalar aplicativo'.");
+            }
             return;
         }
 
