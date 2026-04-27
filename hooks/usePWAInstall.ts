@@ -6,15 +6,11 @@ export function usePWAInstall() {
     const [isStandalone, setIsStandalone] = useState(false);
 
     useEffect(() => {
-        // Detect if already installed/standalone
         const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
         setIsStandalone(standalone);
 
-        // Check if on mobile (iOS or Android)
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        
-        // If it's mobile and not yet installed, mark as installable (for the UI)
-        if (isMobile && !standalone) {
+        // Se não estiver instalado, mostramos como "instalável" para exibir o botão no Robô
+        if (!standalone) {
             setIsInstallable(true);
         }
 
