@@ -9,18 +9,15 @@ export function usePWAInstall() {
         const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
         setIsStandalone(standalone);
 
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-        
-        // No iOS, como o evento nunca dispara, forçamos a interface de instalação a aparecer para podermos mostrar as instruções manuais.
-        // Nos outros (Android/Windows), só mostramos a interface de instalação QUANDO o navegador de fato disparar o evento, garantindo que o prompt nativo vai funcionar.
-        if (isIOS && !standalone) {
+        // ALWAYS show the install UI if not standalone, so the user doesn't think it's broken
+        if (!standalone) {
             setIsInstallable(true);
         }
+
         const handler = (e: any) => {
             console.log('✅ PWA beforeinstallprompt event fired');
             e.preventDefault();
             setDeferredPrompt(e);
-            setIsInstallable(true);
         };
 
         console.log('⏳ Listening for beforeinstallprompt...');
@@ -37,14 +34,13 @@ export function usePWAInstall() {
             const isWindows = /Win/i.test(navigator.userAgent);
             
             if (isIOS) {
-                // No iOS o onInstallClick já chama o modal bonito, mas deixamos aqui por segurança
                 return;
             }
 
             if (isWindows) {
-                alert("Para instalar no Windows:\n\n1. Clique no ícone de instalação (monitor com seta) na barra de endereços do navegador.\n2. Ou clique nos 'Três Pontos' do menu e escolha 'Salvar e Compartilhar' -> 'Instalar Aplicativo'.");
+                alert("O navegador bloqueou a mensagem automática (provavelmente porque você já instalou ou fechou a janela antes).\n\nPara instalar agora no Windows:\n1. Clique no ícone de instalação (monitor com seta) na barra de endereços do navegador.\n2. Ou clique nos 'Três Pontos' do menu e escolha 'Salvar e Compartilhar' -> 'Instalar Aplicativo'.");
             } else {
-                alert("Para instalar:\n\nNo Android/Chrome: Clique nos três pontos do navegador e escolha 'Instalar aplicativo'.");
+                alert("O navegador bloqueou a mensagem automática (pode ser cache ou você já fechou o aviso antes).\n\nPara forçar a instalação no Android/Chrome:\nClique nos TRÊS PONTOS do navegador no canto superior direito e escolha 'Instalar aplicativo' ou 'Adicionar à tela inicial'.");
             }
             return;
         }
@@ -58,7 +54,6 @@ export function usePWAInstall() {
 
         // We've used the prompt, and can't use it again, throw it away
         setDeferredPrompt(null);
-        setIsInstallable(false);
     };
 
     return { isInstallable, isStandalone, installPWA };
