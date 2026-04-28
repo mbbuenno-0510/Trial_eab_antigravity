@@ -183,30 +183,30 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onRegister }) => {
                 .pdf-hidden-source { position: absolute; left: -99999px; top: 0; width: 794px; pointer-events: none; background: white; }
             `}</style>
 
-            {/* BARRA DE COMANDO SUPERIOR */}
-            <div className="bg-slate-900 text-white p-4 z-[250] flex justify-between items-center shadow-2xl border-b border-slate-800 shrink-0">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl shadow-inner">🤖</div>
-                    <div className="leading-tight">
-                        <span className="font-black text-lg block uppercase tracking-tighter text-blue-400">EAB MASTER 2026</span>
-                        <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold italic">Dossier de Inteligência e Cuidado</span>
+            {/* BARRA DE COMANDO SUPERIOR - AGORA STICKY E MOBILE-FRIENDLY */}
+            <div className="bg-slate-900/95 backdrop-blur-md text-white p-3 md:p-4 z-[250] flex flex-col sm:flex-row justify-between items-center shadow-2xl border-b border-slate-800 shrink-0 sticky top-0 gap-3 sm:gap-0">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-xl flex items-center justify-center text-lg shadow-inner shrink-0">🤖</div>
+                    <div className="leading-tight overflow-hidden">
+                        <span className="font-black text-sm md:text-lg block uppercase tracking-tighter text-blue-400 truncate">EAB MASTER 2026</span>
+                        <span className="text-[8px] md:text-[10px] text-slate-500 uppercase tracking-widest font-bold italic truncate block">Dossier de Inteligência e Cuidado</span>
                     </div>
                 </div>
-                <div className="flex gap-3">
-                    <button id="btn-download" onClick={handleDownloadPDF} className="bg-blue-600 hover:bg-blue-500 px-6 py-2.5 rounded-2xl font-black text-xs flex items-center gap-2 transition-all shadow-lg active:scale-95 border border-blue-400">
-                        <Download className="w-4 h-4" /> BAIXAR DOSSIER
+                <div className="flex flex-wrap justify-center sm:justify-end gap-2 md:gap-3 w-full sm:w-auto">
+                    <button id="btn-download" onClick={handleDownloadPDF} className="bg-blue-600 hover:bg-blue-500 px-3 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl font-black text-[9px] md:text-xs flex items-center gap-2 transition-all shadow-lg active:scale-95 border border-blue-400">
+                        <Download className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden xs:inline">BAIXAR</span> DOSSIER
                     </button>
-                    <button id="btn-download-screens" onClick={handleDownloadScreenshots} className="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-2xl font-black text-xs flex items-center gap-2 transition-all shadow-lg active:scale-95 border border-indigo-400">
-                        <Monitor className="w-4 h-4" /> APRESENTAÇÃO DE TELAS
+                    <button id="btn-download-screens" onClick={handleDownloadScreenshots} className="bg-indigo-600 hover:bg-indigo-500 px-3 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl font-black text-[9px] md:text-xs flex items-center gap-2 transition-all shadow-lg active:scale-95 border border-indigo-400">
+                        <Monitor className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden xs:inline">DESIGN</span> TELAS
                     </button>
-                    <button onClick={onBack} className="bg-slate-800 hover:bg-slate-700 px-6 py-2.5 rounded-2xl font-black text-xs flex items-center gap-2 transition-all border border-slate-700">
-                        <ArrowLeft className="w-4 h-4" /> SAIR
+                    <button onClick={onBack} className="bg-rose-600 hover:bg-rose-500 px-3 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl font-black text-[9px] md:text-xs flex items-center gap-2 transition-all border border-rose-400 shadow-lg">
+                        <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> VOLTAR
                     </button>
                 </div>
             </div>
 
             {/* VIEWER ENGINE */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col items-center bg-slate-950 py-12 no-scrollbar scroll-smooth">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col items-center bg-slate-950 py-6 md:py-12 no-scrollbar scroll-smooth">
                 
                 <div 
                     id="viewport-container"
