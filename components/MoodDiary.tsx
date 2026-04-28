@@ -10,17 +10,8 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, 
 import RobotMascot from './RobotMascot';
 import BehaviorDiary from './BehaviorDiary'; 
 
-// ... (Rest of constants and helpers - keep as is)
-// ... EMOTION_DETAILS, MOOD_CATEGORY_VALUES, PERIOD_ORDER, getLocalTodayString, TODAY_STRING
-// ... Audio functions
-
-// Re-declare constants to ensure context is kept if I don't paste the whole file, 
-// but XML format requires full content usually or concise replacement. 
-// I will provide the FULL file content with the modifications.
-
-// ... (All imports and constants)
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }); 
+const GEMINI_KEY = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+const ai = new GoogleGenAI({ apiKey: GEMINI_KEY }); 
 
 const EMOTION_DETAILS: Record<MoodType, { color: string; icon: string; label: string; explanation: string; category: string }> = {
   [MoodType.HAPPY]: { color: '#34D399', icon: '😊', label: 'Alegria', explanation: 'A Alegria nos conecta com as pessoas que amamos e nos dá energia para brincar!', category: 'Bom' },
@@ -89,7 +80,7 @@ async function decodeAudioData(
 }
 
 const generateSpeech = async (text: string): Promise<string | null> => {
-  if (!text || !process.env.GEMINI_API_KEY) return null; 
+  if (!text || !GEMINI_KEY) return null; 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3.1-flash-tts-preview",
@@ -526,7 +517,7 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
     stopAllAudio(); setIsAnalysing(true);
     try {
         let aiFeedback = "Continue firme! 🌟";
-        if (process.env.GEMINI_API_KEY) {
+        if (GEMINI_KEY) {
             const userRole = isChildProfile ? 'uma criança' : 'um adulto'; 
             const prompt = `Aja como um psicólogo empático para ${userRole}. O usuário está sentindo: ${EMOTION_DETAILS[mood].label}. Período: ${period}. Notas: "${notes}". Responda com um insight curto, positivo e acolhedor (máximo 2 frases).`;
             const result = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: [{ role: "user", parts: [{ text: prompt }] }] });
