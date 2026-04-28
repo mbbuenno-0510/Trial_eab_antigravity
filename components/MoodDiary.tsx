@@ -403,7 +403,11 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
     return () => { if (recognitionRef.current) recognitionRef.current.stop(); };
   }, [isListening]); 
 
-  useEffect(() => { return () => { stopAllAudio(); if (audioContextRef.current && audioContextRef.current.state !== 'closed') audioContextRef.current.close(); }; }, [stopAllAudio]);
+  useEffect(() => { 
+    return () => { 
+        stopAllAudio(); 
+    }; 
+  }, [stopAllAudio]);
 
   useEffect(() => {
     stopAllAudio(); 
@@ -430,7 +434,7 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
     if (!recognitionRef.current) return;
     stopAllAudio();
     if (isListening) { recognitionRef.current.stop(); setIsListening(false); } 
-    else { textBaseRef.current = notes; if (audioContextRef.current && audioContextRef.current.state === 'suspended') audioContextRef.current.resume(); recognitionRef.current.start(); }
+    else { textBaseRef.current = notes; recognitionRef.current.start(); }
   };
 
   const handleSpeakExplanation = () => {
@@ -709,8 +713,7 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
             {filteredHistory.length === 0 ? <p className="text-center text-slate-500">Nenhum registro encontrado.</p> : filteredHistory.map(entry => {
                 const details = EMOTION_DETAILS[entry.mood];
                 const isToday = isEntryToday(entry.dateString);
-                const isThisPlaying = speakingHistoryId === entry.id && !isHistoryAudioLoading;
-                const isThisLoading = speakingHistoryId === entry.id && isHistoryAudioLoading;
+                const isThisPlaying = speakingHistoryId === entry.id;
 
                 return (
                     <div key={entry.id} className="p-4 bg-white rounded-xl shadow-sm border-l-4" style={{ borderColor: details.color }}>
@@ -734,8 +737,8 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
                                     <p className="text-xs font-bold text-blue-700 mb-0.5">Insight do Robô</p>
                                     <p className="text-sm text-slate-700 leading-snug">{entry.aiFeedback}</p>
                                 </div>
-                                <button onClick={() => handlePlayHistoryInsight(entry)} disabled={isHistoryAudioLoading && speakingHistoryId !== entry.id} className={`p-2 rounded-full transition-colors ${isThisPlaying ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-600'}`} title={isThisPlaying ? "Parar" : "Ouvir"}>
-                                    {isThisLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : isThisPlaying ? <StopCircle className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                                <button onClick={() => handlePlayHistoryInsight(entry)} className={`p-2 rounded-full transition-colors ${isThisPlaying ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-600'}`} title={isThisPlaying ? "Parar" : "Ouvir"}>
+                                    {isThisPlaying ? <StopCircle className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                                 </button>
                             </div>
                         )}
