@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import firebase, { auth, db } from './services/firebase';
 import { ProfileType, MoodType } from './types';
-import { Loader2, ArrowLeft, User, ShieldCheck, CheckCircle2, Stethoscope, GraduationCap, Mail, RefreshCw, Send, LogIn, FileText, Smartphone } from 'lucide-react';
+import { Loader2, ArrowLeft, User, ShieldCheck, CheckCircle2, Stethoscope, GraduationCap, Mail, RefreshCw, Send, LogIn, FileText, Smartphone, Scale } from 'lucide-react';
 import RobotMascot from './components/RobotMascot';
 import LandingPage from './components/LandingPage';
+import RightsModal from './components/RightsModal';
 import { usePWAInstall } from './hooks/usePWAInstall';
 
 interface AuthProps {
@@ -34,6 +35,7 @@ interface AuthProps {
 const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
   const [view, setView] = useState<AuthView>('LOGIN');
   const [showLanding, setShowLanding] = useState(false);
+  const [showRights, setShowRights] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -642,6 +644,13 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
                   >
                       <FileText className="w-3 h-3" /> Ver Apresentação do Projeto
                   </button>
+                  <button 
+                      type="button"
+                      onClick={() => setShowRights(true)}
+                      className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-indigo-600 transition-colors bg-white/50 hover:bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-100"
+                  >
+                      <Scale className="w-3 h-3" /> Direitos e Leis (Brasil)
+                  </button>
                   <p className="text-slate-800 font-medium text-center text-xs opacity-70">
                       Desenvolvido por MichelBB
                   </p>
@@ -650,6 +659,7 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
           </form>
         )}
       </div>
+      <RightsModal isOpen={showRights} onClose={() => setShowRights(false)} />
     </div>
   );
 };
