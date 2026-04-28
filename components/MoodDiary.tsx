@@ -509,7 +509,7 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
   };
 
   const handleReset = () => {
-      setMood(null); setNotes(''); setCurrentInsight(''); setDisplayState('form'); setPrefetchedAudioBuffer(null); setEmotionExplanation("Selecione um humor."); setEntryDate(TODAY_STRING); setPeriod('Manhã');           
+      setMood(null); setNotes(''); setCurrentInsight(''); setDisplayState('form'); setEmotionExplanation("Selecione um humor."); setEntryDate(TODAY_STRING); setPeriod('Manhã');           
   };
 
   const chartData = useMemo(() => {
