@@ -8,10 +8,6 @@ import LandingPage from './components/LandingPage';
 import RightsModal from './components/RightsModal';
 import { usePWAInstall } from './hooks/usePWAInstall';
 
-interface AuthProps {
-  onLoginSuccess: () => void;
-  onShowPWAHint?: () => void;
-}
 
 type AuthView = 'LOGIN' | 'PROFILE_SELECT' | 'REGISTER' | 'VERIFY_EMAIL' | 'RECOVERY';
 
