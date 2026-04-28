@@ -303,7 +303,7 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ initialMed, targetUid, 
 
     return (
         <div className="flex flex-col h-full relative">
-            <div className="space-y-3 pb-24">
+            <div className="space-y-3 pb-32">
                 <div className="flex gap-2">
                     <div className="flex-[2]">
                         <Input 
@@ -536,7 +536,7 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ initialMed, targetUid, 
                 </div>
             </div>
 
-            <div className="sticky -mx-6 p-4 bg-white border-t border-slate-100 flex gap-3 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]" style={{ bottom: '2rem', marginBottom: '2rem' }}>
+            <div className="sticky -mx-6 p-4 bg-white border-t border-slate-100 flex gap-3 z-10 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]" style={{ bottom: '-1px', marginTop: 'auto' }}>
                 <Button variant="secondary" onClick={onClose} className="flex-1 py-3" disabled={isSaving}>Cancelar</Button>
                 <Button onClick={handleSaveMedication} className="flex-[2] py-3 bg-blue-600 hover:bg-blue-700 text-white shadow-lg" disabled={isSaving}>
                     {isSaving ? <><Loader2 className="w-4 h-4 animate-spin mr-2"/> {uploadProgress !== null && uploadProgress < 100 ? `Transmitindo... ${Math.round(uploadProgress)}%` : 'Finalizando...'}</> : (initialMed?.id ? "Salvar Alterações" : "Adicionar Medicamento")}
