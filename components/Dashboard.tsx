@@ -9,9 +9,7 @@ import WelcomeCard from './WelcomeCard';
 import DashboardSummaryCard from './DashboardSummaryCard';
 import NextTherapyCard from './NextTherapyCard';
 import LastDiaryCard from './LastDiaryCard';
-import RightsModal from './RightsModal';
-import { Card, Button } from './ui';
-import { Scale } from 'lucide-react';
+import { Card, Button } from './ui'; 
 
 // Hooks e Tipos
 import { auth } from '../services/firebase'; 
@@ -40,7 +38,6 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
     } = useDashboardData(userProfile);
 
     const { isInstallable, isStandalone, installPWA } = usePWAInstall();
-    const [showRightsModal, setShowRightsModal] = useState(false);
 
     // Seleciona o próximo compromisso para o card de destaque
     const nextAppointment = upcomingTherapies.length > 0 ? upcomingTherapies[0] : null;
@@ -133,30 +130,6 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
                 {/* Último Registro do Diário */}
                 <LastDiaryCard lastEntry={lastDiaryEntry} />
             </div>
-
-            {/* 4. DIREITOS E PRERROGATIVAS */}
-            <div className="mt-6">
-                <button 
-                    onClick={() => setShowRightsModal(true)}
-                    className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white p-4 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-between group"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="bg-white/20 p-3 rounded-xl group-hover:scale-110 transition-transform">
-                            <Scale className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="text-left">
-                            <h3 className="font-black text-lg">Direitos e Prerrogativas</h3>
-                            <p className="text-indigo-100 text-xs">Guia rápido de inclusão, saúde e proteção</p>
-                        </div>
-                    </div>
-                    <div className="bg-white/20 px-4 py-2 rounded-lg text-sm font-bold group-hover:bg-white group-hover:text-indigo-600 transition-colors">
-                        Ler Guia
-                    </div>
-                </button>
-            </div>
-
-            {/* Modal de Direitos */}
-            <RightsModal isOpen={showRightsModal} onClose={() => setShowRightsModal(false)} />
         </div>
     );
 };
