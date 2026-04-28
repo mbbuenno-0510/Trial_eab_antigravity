@@ -16,6 +16,7 @@ const GlobalAlarmMonitor: React.FC<GlobalAlarmMonitorProps> = ({ userProfile }) 
     
     const [activeAlarms, setActiveAlarms] = useState<(Medication | Therapy | Appointment)[]>([]);
     const [triggeredAlarms, setTriggeredAlarms] = useState<Set<string>>(new Set());
+    const [isAudioEnabled, setIsAudioEnabled] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const [childDisplayName, setChildDisplayName] = useState<string | null>(null);
@@ -34,10 +35,29 @@ const GlobalAlarmMonitor: React.FC<GlobalAlarmMonitorProps> = ({ userProfile }) 
         return () => unsub();
     }, [targetUid]);
 
-    // Audio Setup
+    // Audio Setup and Mobile Interaction Unlock
     useEffect(() => {
         audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         audioRef.current.loop = true;
+        audioRef.current.volume = 0.5;
+
+        // Unlock audio on mobile with ANY interaction
+        const unlockAudio = () => {
+            if (audioRef.current) {
+                // Play and immediately pause to "warm up" the audio engine for mobile
+                audioRef.current.play().then(() => {
+                    audioRef.current?.pause();
+                    audioRef.current!.currentTime = 0;
+                    setIsAudioEnabled(true);
+                    console.log("🔊 Áudio desbloqueado para o despertador!");
+                }).catch(e => console.log("Aguardando interação para áudio...", e));
+            }
+            window.removeEventListener('click', unlockAudio);
+            window.removeEventListener('touchstart', unlockAudio);
+        };
+
+        window.addEventListener('click', unlockAudio);
+        window.addEventListener('touchstart', unlockAudio);
 
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
@@ -48,6 +68,8 @@ const GlobalAlarmMonitor: React.FC<GlobalAlarmMonitorProps> = ({ userProfile }) 
                 audioRef.current.pause();
                 audioRef.current = null;
             }
+            window.removeEventListener('click', unlockAudio);
+            window.removeEventListener('touchstart', unlockAudio);
         };
     }, []);
 
@@ -178,7 +200,8 @@ const GlobalAlarmMonitor: React.FC<GlobalAlarmMonitorProps> = ({ userProfile }) 
             }
         };
 
-        const interval = setInterval(checkAlarms, 30000); 
+        // Verificação mais frequente (a cada 10 segundos) para evitar "pular" minutos em conexões lentas
+        const interval = setInterval(checkAlarms, 10000); 
         return () => clearInterval(interval);
     }, [medications, therapies, appointments, triggeredAlarms, childDisplayName]);
 
@@ -197,7 +220,11 @@ const GlobalAlarmMonitor: React.FC<GlobalAlarmMonitorProps> = ({ userProfile }) 
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-300">
                 <div className="bg-red-600 p-6 flex flex-col items-center text-white relative">
                     <div className="absolute top-4 right-4">
-                        <Volume2 className="w-6 h-6 animate-pulse" />
+                        {isAudioEnabled ? (
+                            <Volume2 className="w-6 h-6 animate-pulse" />
+                        ) : (
+                            <span className="text-[10px] bg-white/20 px-2 py-1 rounded-full animate-pulse">Toque na tela para ligar o som</span>
+                        )}
                     </div>
                     <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 border-4 border-white/30 animate-bounce">
                         <Bell className="w-10 h-10 text-white fill-current" />
