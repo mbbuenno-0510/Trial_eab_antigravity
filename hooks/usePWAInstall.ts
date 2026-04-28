@@ -9,10 +9,8 @@ export function usePWAInstall() {
         const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
         setIsStandalone(standalone);
 
-        // ALWAYS show the install UI if not standalone, so the user doesn't think it's broken
-        if (!standalone) {
-            setIsInstallable(true);
-        }
+        // We want to show the install option if not already installed
+        setIsInstallable(!standalone);
 
         const handler = (e: any) => {
             console.log('✅ PWA beforeinstallprompt event fired');
@@ -30,18 +28,13 @@ export function usePWAInstall() {
 
     const installPWA = async () => {
         if (!deferredPrompt) {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-            const isWindows = /Win/i.test(navigator.userAgent);
+            const ua = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+            const isAndroid = /Android/i.test(ua);
             
-            if (isIOS) {
-                return;
-            }
-
-            if (isWindows) {
-                return 'windows';
-            } else {
-                return 'android';
-            }
+            if (isIOS) return 'ios';
+            if (isAndroid) return 'android';
+            return 'windows'; // Fallback for desktop/windows
         }
 
         // Show the prompt
