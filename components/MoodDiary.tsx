@@ -60,47 +60,37 @@ function decode(base64: string): Uint8Array {
   return bytes;
 }
 
-async function decodeAudioData(
-  data: Uint8Array,
-  ctx: AudioContext,
-  sampleRate: number,
-  numChannels: number,
-): Promise<AudioBuffer> {
-  const dataInt16 = new Int16Array(data.buffer);
-  const frameCount = dataInt16.length / numChannels;
-  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
-
-  for (let channel = 0; channel < numChannels; channel++) {
-    const channelData = buffer.getChannelData(channel);
-    for (let i = 0; i < frameCount; i++) {
-      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0; 
-    }
-  }
-  return buffer;
-}
-
-const generateSpeech = async (text: string): Promise<string | null> => {
-  if (!text || !GEMINI_KEY) return null; 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
-      contents: [{ parts: [{ text }] }],
-      config: {
-        responseModalities: [Modality.AUDIO],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Puck' },
-          },
-        },
-      },
-    });
-    const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (!audioData) console.warn("🔊 TTS: No audio data in response");
-    return audioData || null;
-  } catch (error) {
-    console.error("Error generating speech:", error);
+const speakText = (text: string, onEnd?: () => void) => {
+  if (!window.speechSynthesis) {
+    console.warn("Browser does not support Speech Synthesis");
+    if (onEnd) onEnd();
     return null;
   }
+
+  // Cancel any ongoing speech
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'pt-BR';
+  utterance.rate = 1.0;
+  utterance.pitch = 1.1; // Slightly higher pitch for a "robot/friendly" feel
+
+  // Try to find a good Portuguese voice
+  const voices = window.speechSynthesis.getVoices();
+  const ptVoice = voices.find(v => v.lang.includes('pt-BR')) || voices.find(v => v.lang.includes('pt'));
+  if (ptVoice) utterance.voice = ptVoice;
+
+  utterance.onend = () => {
+    if (onEnd) onEnd();
+  };
+
+  utterance.onerror = (e) => {
+    console.error("SpeechSynthesis error:", e);
+    if (onEnd) onEnd();
+  };
+
+  window.speechSynthesis.speak(utterance);
+  return utterance;
 };
 
 // --- COMPONENTES AUXILIARES ---
@@ -286,17 +276,10 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
   const [currentInsight, setCurrentInsight] = useState('');
   const [isAnalysing, setIsAnalysing] = useState(false);
   
-  // Audio Playback
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const [prefetchedAudioBuffer, setPrefetchedAudioBuffer] = useState<AudioBuffer | null>(null);
-  
-  // Explanation Audio
-  const [isSpeakingExplanation, setIsSpeakingExplanation] = useState(false);
+  // 🆕 Web Speech API states
   const [isSynthesizingExplanation, setIsSynthesizingExplanation] = useState(false);
-  const explanationAudioSourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const [explanationAudioBuffer, setExplanationAudioBuffer] = useState<AudioBuffer | null>(null);
+  const [isSpeakingExplanation, setIsSpeakingExplanation] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Speech Recognition
   const [isListening, setIsListening] = useState(false);
@@ -319,10 +302,10 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
 
   const stopAllAudio = useCallback(() => {
       if (isListening && recognitionRef.current) recognitionRef.current.stop();
-      if (audioSourceRef.current) { audioSourceRef.current.stop(); setIsPlaying(false); audioSourceRef.current = null; }
-      if (explanationAudioSourceRef.current) { explanationAudioSourceRef.current.stop(); setIsSpeakingExplanation(false); explanationAudioSourceRef.current = null; }
-      if (historyAudioSourceRef.current) { historyAudioSourceRef.current.stop(); setSpeakingHistoryId(null); historyAudioSourceRef.current = null; }
-      if (audioContextRef.current && audioContextRef.current.state === 'running') { audioContextRef.current.suspend(); }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      setIsPlaying(false);
+      setIsSpeakingExplanation(false);
+      setSpeakingHistoryId(null);
   }, [isListening]);
 
   useEffect(() => {
@@ -423,23 +406,9 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
   useEffect(() => { return () => { stopAllAudio(); if (audioContextRef.current && audioContextRef.current.state !== 'closed') audioContextRef.current.close(); }; }, [stopAllAudio]);
 
   useEffect(() => {
-    const fetchExplanation = async () => {
-        stopAllAudio(); setExplanationAudioBuffer(null);
-        if (!mood) { setEmotionExplanation("Selecione um humor."); return; }
-        setIsSynthesizingExplanation(true);
-        try {
-            const text = EMOTION_DETAILS[mood].explanation;
-            setEmotionExplanation(text);
-            const base64Audio = await generateSpeech(text);
-            if (base64Audio) {
-                if (!audioContextRef.current) audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-                const ctx = audioContextRef.current;
-                const buffer = await decodeAudioData(decode(base64Audio), ctx, 24000, 1);
-                setExplanationAudioBuffer(buffer);
-            }
-        } catch (err) { console.error(err); } finally { setIsSynthesizingExplanation(false); }
-    };
-    fetchExplanation();
+    stopAllAudio(); 
+    if (!mood) { setEmotionExplanation("Selecione um humor."); return; }
+    setEmotionExplanation(EMOTION_DETAILS[mood].explanation);
   }, [mood, stopAllAudio]);
     
   useEffect(() => {
@@ -466,36 +435,17 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
 
   const handleSpeakExplanation = () => {
     if (isSpeakingExplanation) { stopAllAudio(); return; }
-    if (!explanationAudioBuffer || !audioContextRef.current) return;
     stopAllAudio();
-    const ctx = audioContextRef.current;
-    if (ctx.state === 'suspended') ctx.resume();
-    const source = ctx.createBufferSource(); source.buffer = explanationAudioBuffer; source.connect(ctx.destination);
-    source.onended = () => { setIsSpeakingExplanation(false); explanationAudioSourceRef.current = null; };
-    source.start(); explanationAudioSourceRef.current = source; setIsSpeakingExplanation(true);
+    setIsSpeakingExplanation(true);
+    speakText(emotionExplanation, () => setIsSpeakingExplanation(false));
   };
 
   const handlePlayHistoryInsight = useCallback(async (entry: MoodEntry) => {
       if (!entry.aiFeedback) return;
       if (speakingHistoryId === entry.id) { stopAllAudio(); return; }
       stopAllAudio();
-      setIsHistoryAudioLoading(true); setSpeakingHistoryId(entry.id);
-      try {
-          if (!audioContextRef.current) audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-          const ctx = audioContextRef.current; if (ctx.state === 'suspended') ctx.resume();
-          let buffer: AudioBuffer;
-          if (historyAudioCache.current[entry.id]) { buffer = historyAudioCache.current[entry.id]; } 
-          else {
-              const base64Audio = await generateSpeech(entry.aiFeedback);
-              if (!base64Audio) throw new Error("Falha na API TTS");
-              buffer = await decodeAudioData(decode(base64Audio), ctx, 24000, 1);
-              historyAudioCache.current[entry.id] = buffer;
-          }
-          const source = ctx.createBufferSource(); source.buffer = buffer; source.connect(ctx.destination);
-          source.onended = () => { setSpeakingHistoryId(null); historyAudioSourceRef.current = null; };
-          source.start(); historyAudioSourceRef.current = source;
-      } catch (error) { console.error("Erro ao tocar histórico:", error); setSpeakingHistoryId(null); alert("Não foi possível reproduzir o áudio."); } 
-      finally { setIsHistoryAudioLoading(false); }
+      setSpeakingHistoryId(entry.id);
+      speakText(entry.aiFeedback, () => setSpeakingHistoryId(null));
   }, [speakingHistoryId, stopAllAudio]);
 
   const handleConfirmDeleteStart = (entryId: string, entryDateString: string) => {
@@ -542,25 +492,16 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
         const path = `users/${targetUid}/mood_entries`;
         if(targetUid) await db.collection("users").doc(targetUid).collection("mood_entries").add(moodEntry).catch(err => handleFirestoreError(err, OperationType.WRITE, path));
         else throw new Error("UID de destino não encontrado.");
-        setCurrentInsight(aiFeedback); setDisplayState('insight'); setPrefetchedAudioBuffer(null);
-        const base64Audio = await generateSpeech(aiFeedback);
-        if (base64Audio) {
-            if (!audioContextRef.current) audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-            const buffer = await decodeAudioData(decode(base64Audio), audioContextRef.current, 24000, 1);
-            setPrefetchedAudioBuffer(buffer);
-        }
+        setCurrentInsight(aiFeedback); setDisplayState('insight');
     } catch (error: any) { console.error("Erro ao salvar:", error); alert(`Falha ao registrar humor: ${error.message || 'Erro desconhecido'}`); } 
     finally { setIsAnalysing(false); }
   };
 
   const handlePlayInsight = () => {
     if (isPlaying) { stopAllAudio(); return; }
-    if (!prefetchedAudioBuffer || !audioContextRef.current) return;
     stopAllAudio();
-    const ctx = audioContextRef.current; if (ctx.state === 'suspended') ctx.resume();
-    const source = ctx.createBufferSource(); source.buffer = prefetchedAudioBuffer; source.connect(ctx.destination);
-    source.onended = () => { setIsPlaying(false); audioSourceRef.current = null; };
-    source.start(); audioSourceRef.current = source; setIsPlaying(true);
+    setIsPlaying(true);
+    speakText(currentInsight, () => setIsPlaying(false));
   };
 
   const handleReset = () => {
