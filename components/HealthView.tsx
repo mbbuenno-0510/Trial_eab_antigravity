@@ -455,15 +455,16 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ initialMed, targetUid, 
                     <label className="block text-xs font-bold text-slate-700 mb-2 uppercase">
                         Horários de Administração
                     </label>
-                    <div className="flex gap-2 mb-3">
+                    <div className="flex flex-col sm:flex-row gap-2 mb-3">
                         <Input
                             type="time"
                             value={newTime}
                             onChange={(e) => setNewTime(e.target.value)}
                             className="flex-grow text-sm"
                         />
-                        <Button variant="primary" onClick={handleAddTime} type="button" className="px-4">
-                            <Plus className="w-4 h-4" />
+                        <Button variant="primary" onClick={handleAddTime} type="button" className="w-full sm:w-auto px-4 py-3 sm:py-2">
+                            <Plus className="w-4 h-4 mr-2 sm:mr-0" />
+                            <span className="sm:hidden">Adicionar Horário</span>
                         </Button>
                     </div>
 
@@ -526,7 +527,7 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ initialMed, targetUid, 
                                 placeholder="Ex: Pegar na Farmácia Central toda última terça... / Precisa de cópia do RG..."
                                 className="text-xs"
                             />
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
                                 <Input label="Próxima Retirada" type="date" value={newMed.dataRetirada || ''} onChange={e => setNewMed({...newMed, dataRetirada: e.target.value})} />
                                 <Input label="Hora" type="time" value={newMed.horaRetirada || ''} onChange={e => setNewMed({...newMed, horaRetirada: e.target.value})} />
                             </div>
@@ -590,9 +591,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ initialAppt, target
             <div className="space-y-4">
                 <Input label="Título da Consulta" value={newAppt.title || ''} onChange={e => setNewAppt({...newAppt, title: e.target.value})} />
                 <Input label="Especialidade/Local" value={newAppt.specialty || ''} onChange={e => setNewAppt({...newAppt, specialty: e.target.value})} />
-                <div className="flex gap-2">
-                    <Input label="Data" type="date" value={newAppt.date || ''} onChange={e => setNewAppt({...newAppt, date: e.target.value})} />
-                    <Input label="Hora da Consulta" type="time" value={newAppt.time || ''} onChange={e => setNewAppt({...newAppt, time: e.target.value})} />
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <Input label="Data" type="date" value={newAppt.date || ''} onChange={e => setNewAppt({...newAppt, date: e.target.value})} className="flex-1" />
+                    <Input label="Hora da Consulta" type="time" value={newAppt.time || ''} onChange={e => setNewAppt({...newAppt, time: e.target.value})} className="flex-1" />
                 </div>
                 <Input label="Hora do Alarme (Opcional)" type="time" value={newAppt.alarmTime || ''} onChange={e => setNewAppt({...newAppt, alarmTime: e.target.value})} />
                 <Input label="Nome do Profissional (Opcional)" value={newAppt.professionalName || ''} onChange={e => setNewAppt({...newAppt, professionalName: e.target.value})} />
@@ -654,11 +655,11 @@ const TherapyModal: React.FC<TherapyModalProps> = ({ initialTherapy, targetUid, 
         <Modal isOpen={true} onClose={onClose} title={isEditing ? "Editar Terapia/Rotina" : "Agendar Terapia/Rotina"}>
             <div className="space-y-4">
                 <Input label="Nome da Terapia/Rotina" value={newTherapy.name || ''} onChange={e => setNewTherapy({...newTherapy, name: e.target.value})} />
-                <div className="flex gap-2">
-                    <Select label="Dia da Semana" value={newTherapy.dayOfWeek} onChange={e => setNewTherapy({...newTherapy, dayOfWeek: parseInt(e.target.value)})}>
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <Select label="Dia da Semana" value={newTherapy.dayOfWeek} onChange={e => setNewTherapy({...newTherapy, dayOfWeek: parseInt(e.target.value)})} className="flex-1">
                         {WEEKDAYS.map((day, index) => <option key={index} value={index}>{day}</option>)}
                     </Select>
-                    <Input label="Hora da Sessão" type="time" value={newTherapy.time || ''} onChange={e => setNewTherapy({...newTherapy, time: e.target.value})} />
+                    <Input label="Hora da Sessão" type="time" value={newTherapy.time || ''} onChange={e => setNewTherapy({...newTherapy, time: e.target.value})} className="flex-1" />
                 </div>
                 <Input label="Nome do Profissional (Opcional)" value={newTherapy.professionalName || ''} onChange={e => setNewTherapy({...newTherapy, professionalName: e.target.value})} />
                 <div className="flex gap-2">
