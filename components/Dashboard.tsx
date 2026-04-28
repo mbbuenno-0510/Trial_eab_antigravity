@@ -130,6 +130,11 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
                 {/* Último Registro do Diário */}
                 <LastDiaryCard lastEntry={lastDiaryEntry} />
             </div>
+
+            {/* VERSÃO NO RODAPÉ DO DASHBOARD */}
+            <p className="text-[10px] text-slate-400 mt-8 mb-4 font-bold tracking-wider text-center uppercase">
+                Desenvolvido por MichelBB | v1.1.0
+            </p>
         </div>
     );
 };

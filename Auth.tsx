@@ -736,8 +736,8 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
                   >
                       <Scale className="w-3 h-3" /> Direitos e Leis (Brasil)
                   </button>
-                  <p className="text-slate-800 font-medium text-center text-xs opacity-70">
-                      Desenvolvido por MichelBB
+                  <p className="text-[10px] text-slate-400 mt-4 font-bold tracking-wider text-center uppercase">
+                      Desenvolvido por MichelBB | v1.1.0
                   </p>
               </div>
             </div>
