@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { UserProfile, MoodType, MoodEntry, ProfileType, BehaviorEntry, SchoolLog, SchoolMedicationLog } from '../types';
 import { db, handleFirestoreError, OperationType } from '../services/firebase';
+import { encryptData, decryptData } from '../services/security';
 import { GoogleGenAI, Modality } from "@google/genai";
 import { Loader2, Calendar as CalendarIcon, Mic, StopCircle, Bot, Trash2, Volume2, BookHeart, ClipboardList, Smile, History, BarChart3, Wind, GraduationCap, AlertTriangle, Pill, Activity, Clock, Filter } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
@@ -359,8 +360,16 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
     if (!targetUid) return;
     const unsubscribeMood = db.collection("users").doc(targetUid).collection("mood_entries")
       .orderBy("timestamp", "desc")
-      .onSnapshot((snapshot) => {
-          const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MoodEntry));
+      .onSnapshot(async (snapshot) => {
+          const entries = await Promise.all(snapshot.docs.map(async doc => {
+              const data = doc.data() as MoodEntry;
+              return { 
+                  id: doc.id, 
+                  ...data,
+                  notes: await decryptData(data.notes, targetUid),
+                  aiFeedback: await decryptData(data.aiFeedback, targetUid)
+              } as MoodEntry;
+          }));
           setHistory(entries);
       }, (err) => handleFirestoreError(err, OperationType.LIST, `users/${targetUid}/mood_entries`));
     return () => unsubscribeMood();
@@ -523,7 +532,20 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
             const result = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: [{ role: "user", parts: [{ text: prompt }] }] });
             if (result.text) aiFeedback = result.text.trim();
         }
-        const moodEntry: Omit<MoodEntry, 'id'> = { userId: targetUid, timestamp: Date.now(), dateString: entryDate, mood, notes, period, aiFeedback };
+        // Criptografar notas e feedback antes de salvar
+        const encryptedNotes = await encryptData(notes, targetUid);
+        const encryptedAiFeedback = await encryptData(aiFeedback, targetUid);
+
+        const moodEntry: Omit<MoodEntry, 'id'> = { 
+            userId: targetUid, 
+            timestamp: Date.now(), 
+            dateString: entryDate, 
+            mood, 
+            notes: encryptedNotes, 
+            period, 
+            aiFeedback: encryptedAiFeedback 
+        };
+        
         const path = `users/${targetUid}/mood_entries`;
         if(targetUid) await db.collection("users").doc(targetUid).collection("mood_entries").add(moodEntry).catch(err => handleFirestoreError(err, OperationType.WRITE, path));
         else throw new Error("UID de destino não encontrado.");

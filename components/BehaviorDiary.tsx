@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import firebase, { db, handleFirestoreError, OperationType } from '../services/firebase';
+import { encryptData, decryptData } from '../services/security';
 import { UserProfile, BehaviorEntry, BehaviorEventType, CrisisIntensity } from '../types';
 import { AlertTriangle, Utensils, Moon, Zap, AlertCircle, Gift, Save, Clock, Trash2, Calendar } from 'lucide-react';
 
@@ -70,8 +71,15 @@ const BehaviorDiary: React.FC<BehaviorDiaryProps> = ({ userProfile, preSelectedC
         query = query.orderBy('timestamp', 'desc').limit(20);
     }
 
-    const unsubscribe = query.onSnapshot(snapshot => {
-        const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BehaviorEntry));
+    const unsubscribe = query.onSnapshot(async snapshot => {
+        const entries = await Promise.all(snapshot.docs.map(async doc => {
+            const data = doc.data() as BehaviorEntry;
+            return { 
+                id: doc.id, 
+                ...data,
+                description: await decryptData(data.description, targetUid)
+            } as BehaviorEntry;
+        }));
         // Filter out system generated alerts (Calm Room)
         const filteredEntries = entries.filter(e => e.authorId !== 'SYSTEM');
         setHistory(filteredEntries);
@@ -91,6 +99,8 @@ const BehaviorDiary: React.FC<BehaviorDiaryProps> = ({ userProfile, preSelectedC
 
     setLoading(true);
     try {
+      const encryptedDescription = await encryptData(description, targetUid);
+
       const newEntry: Omit<BehaviorEntry, 'id'> = {
         userId: targetUid,
         authorId: userProfile.uid,
@@ -98,7 +108,7 @@ const BehaviorDiary: React.FC<BehaviorDiaryProps> = ({ userProfile, preSelectedC
         dateString: entryDate,
         type: selectedType,
         period,
-        description,
+        description: encryptedDescription,
         duration,
         ...(selectedType === 'CRISIS' && { intensity: intensity || undefined }),
       };

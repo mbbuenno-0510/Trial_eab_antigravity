@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'; 
 import { UserProfile, Appointment, MoodEntry, Therapy } from '../types'; 
 import { db } from '../services/firebase'; 
+import { decryptData } from '../services/security';
 
 interface DashboardData {
     totalDiaries: number;
@@ -169,11 +170,20 @@ export const useDashboardData = (userProfile: UserProfile | null): DashboardData
         // LAST DIARY ENTRY
         // Using namespaced syntax: orderBy and limit on the collection reference
         const lastEntryQuery = moodCollectionRef.orderBy('timestamp', 'desc').limit(1);
-        unsubscribes.push(lastEntryQuery.onSnapshot((snapshot) => {
-            const lastEntry: MoodEntry | null = snapshot.docs[0]
-                ? ({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as MoodEntry)
-                : null;
-            setData(prev => ({ ...prev, lastDiaryEntry: lastEntry }));
+        unsubscribes.push(lastEntryQuery.onSnapshot(async (snapshot) => {
+            const doc = snapshot.docs[0];
+            if (doc) {
+                const data = doc.data() as MoodEntry;
+                const lastEntry: MoodEntry = { 
+                    id: doc.id, 
+                    ...data,
+                    notes: await decryptData(data.notes, uid),
+                    aiFeedback: await decryptData(data.aiFeedback, uid)
+                };
+                setData(prev => ({ ...prev, lastDiaryEntry: lastEntry }));
+            } else {
+                setData(prev => ({ ...prev, lastDiaryEntry: null }));
+            }
         }));
 
         // APPOINTMENTS
