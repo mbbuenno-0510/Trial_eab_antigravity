@@ -592,24 +592,30 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
                                                 </div>
                                             </div>
                                             <div className="flex gap-2 shrink-0 z-10">
-                                                <button onClick={(e) => { e.stopPropagation(); setSelectedDoc(doc); setViewModalOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Eye className="w-4 h-4" /></button>
-                                                {canUpload && (
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); setDocToEdit(doc); setUploadModalOpen(true); }}
-                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                        title="Editar"
-                                                    >
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                                {canDelete && (
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); setDocToDelete(doc); setIsDeleteModalOpen(true); }}
-                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Excluir"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                                <button onClick={(e) => { e.stopPropagation(); setSelectedDoc(doc); setViewModalOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Visualizar"><Eye className="w-4 h-4" /></button>
+                                                
+                                                {/* Edit/Delete buttons only for the owner of the document (or parents) */}
+                                                {(isGuardian || doc.uploaderId === userProfile?.uid) && (
+                                                    <>
+                                                        {canUpload && (
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); setDocToEdit(doc); setUploadModalOpen(true); }}
+                                                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                                title="Editar"
+                                                            >
+                                                                <Edit2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                        {canDelete && (
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); setDocToDelete(doc); setIsDeleteModalOpen(true); }}
+                                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                title="Excluir"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         </Card>
