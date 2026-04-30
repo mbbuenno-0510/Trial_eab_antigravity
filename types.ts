@@ -252,7 +252,8 @@ export interface StoredDocument {
   storagePath?: string; 
   uploadedAt: number | Date | FirestoreTimestamp; 
   uploaderId?: string;
-  sharedWithHealth?: boolean; // Novo: Controle individual de compartilhamento com profissionais de saúde
+  sharedWithHealth?: boolean; 
+  sharedWithSchool?: boolean;
   documentDate?: string; // YYYY-MM-DD
   expiryDate?: string; // YYYY-MM-DD
 }

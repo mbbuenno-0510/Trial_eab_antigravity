@@ -360,7 +360,7 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
         let baseDocs = documents;
         
         if (isSchool) {
-            baseDocs = documents.filter(doc => doc.uploaderId === userProfile?.uid);
+            baseDocs = documents.filter(doc => doc.uploaderId === userProfile?.uid || doc.sharedWithSchool);
         } else if (isHealth) {
             baseDocs = documents.filter(doc => {
                 const isMyUpload = doc.uploaderId === userProfile?.uid;
@@ -545,28 +545,48 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
                                                         </div>
                                                     )}
 
-                                                    {/* INDICADOR DE COMPARTILHAMENTO (APENAS DOCS MÉDICOS PARA PAIS) */}
-                                                    {isGuardian && (doc.category === 'Médicos' || doc.category === 'Medical') && (
-                                                        <div className="mt-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                                <div className="relative">
-                                                                    <input 
-                                                                        type="checkbox" 
-                                                                        className="sr-only peer" 
-                                                                        checked={doc.sharedWithHealth || false} 
-                                                                        onChange={async (e) => {
-                                                                            const val = e.target.checked;
-                                                                            if (targetUid) {
-                                                                                await db.collection('users').doc(targetUid).collection('documents').doc(doc.id).update({ sharedWithHealth: val });
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                    <div className="w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-teal-600"></div>
-                                                                </div>
-                                                                <span className={`text-[10px] font-bold uppercase transition-colors ${doc.sharedWithHealth ? 'text-teal-600' : 'text-slate-400'}`}>
-                                                                    {doc.sharedWithHealth ? 'Compartilhado' : 'Privado'}
-                                                                </span>
-                                                            </label>
+                                                    {/* INDICADORES DE COMPARTILHAMENTO (APENAS PARA PAIS) */}
+                                                    {isGuardian && (
+                                                        <div className="mt-2 flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="flex flex-col gap-1">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Saúde</span>
+                                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                                    <div className="relative">
+                                                                        <input 
+                                                                            type="checkbox" 
+                                                                            className="sr-only peer" 
+                                                                            checked={doc.sharedWithHealth || false} 
+                                                                            onChange={async (e) => {
+                                                                                const val = e.target.checked;
+                                                                                if (targetUid) {
+                                                                                    await db.collection('users').doc(targetUid).collection('documents').doc(doc.id).update({ sharedWithHealth: val });
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                        <div className="w-7 h-3.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-teal-600"></div>
+                                                                    </div>
+                                                                </label>
+                                                            </div>
+
+                                                            <div className="flex flex-col gap-1">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Escola</span>
+                                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                                    <div className="relative">
+                                                                        <input 
+                                                                            type="checkbox" 
+                                                                            className="sr-only peer" 
+                                                                            checked={doc.sharedWithSchool || false} 
+                                                                            onChange={async (e) => {
+                                                                                const val = e.target.checked;
+                                                                                if (targetUid) {
+                                                                                    await db.collection('users').doc(targetUid).collection('documents').doc(doc.id).update({ sharedWithSchool: val });
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                        <div className="w-7 h-3.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                                                    </div>
+                                                                </label>
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -920,7 +940,7 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
                 isOpen={isUploadModalOpen} 
                 onClose={() => { setUploadModalOpen(false); setDocToEdit(null); }} 
                 initialData={docToEdit}
-                onUpload={async (title, category, file, sharedWithHealth, documentDate, expiryDate, isEditing) => {
+                onUpload={async (title, category, file, sharedWithHealth, sharedWithSchool, documentDate, expiryDate, isEditing) => {
                 if (!targetUid) return;
                 
                 // Helper to convert to Base64
@@ -964,6 +984,7 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
                         title,
                         category,
                         sharedWithHealth: !!sharedWithHealth,
+                        sharedWithSchool: !!sharedWithSchool,
                         documentDate: documentDate || null,
                         expiryDate: expiryDate || null,
                         ...(file ? {

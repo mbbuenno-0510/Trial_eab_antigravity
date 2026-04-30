@@ -6,7 +6,7 @@ import { StoredDocument } from '../types';
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (title: string, category: string, file: File | null, sharedWithHealth: boolean, documentDate: string, expiryDate: string, isEditing: boolean) => Promise<void>;
+  onUpload: (title: string, category: string, file: File | null, sharedWithHealth: boolean, sharedWithSchool: boolean, documentDate: string, expiryDate: string, isEditing: boolean) => Promise<void>;
   initialData?: StoredDocument | null;
 }
 
@@ -16,6 +16,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUpload, in
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [sharedWithHealth, setSharedWithHealth] = useState(false);
+  const [sharedWithSchool, setSharedWithSchool] = useState(false);
   const [documentDate, setDocumentDate] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
 
@@ -24,12 +25,14 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUpload, in
       setTitle(initialData.title || '');
       setCategory(initialData.category || '');
       setSharedWithHealth(!!initialData.sharedWithHealth);
+      setSharedWithSchool(!!initialData.sharedWithSchool);
       setDocumentDate(initialData.documentDate || '');
       setExpiryDate(initialData.expiryDate || '');
     } else {
       setTitle('');
       setCategory('');
       setSharedWithHealth(false);
+      setSharedWithSchool(false);
       setDocumentDate(new Date().toISOString().split('T')[0]);
       setExpiryDate('');
     }
@@ -62,12 +65,13 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUpload, in
 
     setIsUploading(true);
     try {
-        await onUpload(title, category, selectedFile, sharedWithHealth, documentDate, expiryDate, !!initialData);
+        await onUpload(title, category, selectedFile, sharedWithHealth, sharedWithSchool, documentDate, expiryDate, !!initialData);
         
         // Reset e fecha apenas se sucesso
         setTitle('');
         setCategory('');
         setSharedWithHealth(false);
+        setSharedWithSchool(false);
         setDocumentDate('');
         setExpiryDate('');
         setSelectedFile(null);
@@ -130,9 +134,9 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUpload, in
             </select>
           </div>
 
-          {(category === 'Médicos' || category === 'Medical') && (
-            <div className="bg-teal-50 p-3 rounded-lg border border-teal-100 flex items-center justify-between">
-              <span className="text-xs font-bold text-teal-800">Compartilhar com Médicos?</span>
+          <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <div className="space-y-1">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Ver: Saúde</span>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input 
                   type="checkbox" 
@@ -141,10 +145,26 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUpload, in
                   onChange={(e) => setSharedWithHealth(e.target.checked)}
                   disabled={isUploading}
                 />
-                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600"></div>
+                <div className="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-teal-600"></div>
+                <span className={`ml-2 text-[10px] font-bold uppercase ${sharedWithHealth ? 'text-teal-600' : 'text-slate-400'}`}>{sharedWithHealth ? 'Sim' : 'Não'}</span>
               </label>
             </div>
-          )}
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Ver: Escola</span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer"
+                  checked={sharedWithSchool}
+                  onChange={(e) => setSharedWithSchool(e.target.checked)}
+                  disabled={isUploading}
+                />
+                <div className="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                <span className={`ml-2 text-[10px] font-bold uppercase ${sharedWithSchool ? 'text-indigo-600' : 'text-slate-400'}`}>{sharedWithSchool ? 'Sim' : 'Não'}</span>
+              </label>
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
