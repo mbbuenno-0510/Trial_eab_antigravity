@@ -472,7 +472,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onRegister }) => {
                                             <h4 className="text-3xl font-black text-white mb-6 uppercase tracking-tighter leading-none">Portal do<br/>Mediador</h4>
                                             <ul className="space-y-6 text-slate-400 font-bold text-xs uppercase tracking-widest">
                                                 <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-purple-400"/> Guia de Estratégias</li>
-                                                <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-purple-400"/> Log de Ocorrências</li>
+                                                <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-purple-400"/> Log de Eventos de Sensibilidade</li>
                                                 <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-purple-400"/> Cadastro via RA</li>
                                                 <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-purple-400"/> Histórico Digital</li>
                                             </ul>
@@ -546,7 +546,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onRegister }) => {
                                         <div className="space-y-6">
                                             <div className="w-14 h-14 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg border border-purple-400"><Activity className="w-7 h-7 text-white"/></div>
                                             <h4 className="text-2xl font-black text-purple-200 tracking-tight">Análise de Sentimento</h4>
-                                            <p className="text-blue-100/70 text-base leading-relaxed font-medium">Identifica nuances em notas de voz ou texto que indicam fadiga sensorial antes mesmo da ocorrência física.</p>
+                                            <p className="text-blue-100/70 text-base leading-relaxed font-medium">Identifica nuances em notas de voz ou texto que indicam fadiga sensorial antes mesmo do evento físico.</p>
                                         </div>
                                     </div>
                                 </div>

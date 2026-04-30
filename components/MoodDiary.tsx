@@ -801,7 +801,7 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
                               <div key={log.id} className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
                                   <div className="flex justify-between items-center mb-3">
                                       <span className="text-xs font-bold bg-purple-50 text-purple-700 px-2 py-1 rounded">{new Date(log.date + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
-                                      {log.dysregulationCount > 0 && (<span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> {log.dysregulationCount} Ocorrência(s)</span>)}
+                                      {log.dysregulationCount > 0 && (<span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> {log.dysregulationCount} Evento(s) de Sensibilidade</span>)}
                                   </div>
                                   <div className="grid grid-cols-2 gap-3 mb-3">
                                       <div className="bg-slate-50 p-2 rounded-lg"><p className="text-[10px] text-slate-500 font-bold uppercase mb-0.5">Social</p><p className="text-sm font-semibold text-slate-800">{log.socialInteraction}</p></div>

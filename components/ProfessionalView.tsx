@@ -52,7 +52,7 @@ type ReportModel = 'CHILD_MOOD' | 'PARENTS_BEHAVIOR' | 'SCHOOL_ANALYSIS' | 'PROF
 const REPORT_MODELS: { id: ReportModel; label: string; desc: string; icon: React.ReactNode }[] = [
     { id: 'CHILD_MOOD', label: 'Análise Emocional (Criança)', desc: 'Foco nos padrões de humor e relatos da criança.', icon: <BookHeart className="w-5 h-5 text-blue-500"/> },
     { id: 'PARENTS_BEHAVIOR', label: 'Análise Comportamental (Pais)', desc: 'Foco em crises, gatilhos e observações dos pais.', icon: <ClipboardList className="w-5 h-5 text-teal-500"/> },
-    { id: 'SCHOOL_ANALYSIS', label: 'Análise Escolar (Professores)', desc: 'Foco na socialização, participação e ocorrências na escola.', icon: <GraduationCap className="w-5 h-5 text-indigo-500"/> },
+    { id: 'SCHOOL_ANALYSIS', label: 'Análise Escolar (Professores)', desc: 'Foco na socialização, participação e eventos de sensibilidade na escola.', icon: <GraduationCap className="w-5 h-5 text-indigo-500"/> },
     { id: 'PROFESSIONAL_ANALYSIS', label: 'Minha Análise Clínica', desc: 'Foco na evolução clínica e notas das suas sessões.', icon: <Stethoscope className="w-5 h-5 text-orange-500"/> },
     { id: 'MULTI_ANALYSIS', label: 'Análise Multidisciplinar', desc: 'Foco nos registros compartilhados por outros profissionais.', icon: <Network className="w-5 h-5 text-pink-500"/> },
     { id: 'COMBINED', label: 'Relatório Integrado (360°)', desc: 'Correlaciona humor, casa, escola, suas sessões e equipe multi.', icon: <Activity className="w-5 h-5 text-purple-500"/> },
@@ -588,7 +588,7 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
             switch (selectedModel) {
                 case 'CHILD_MOOD': promptContext = `Analise apenas os dados de humor da criança. Foco em padrões emocionais, frequência de sentimentos e horários. Dados: ${moodText}`; break;
                 case 'PARENTS_BEHAVIOR': promptContext = `Analise apenas os dados comportamentais registrados pelos pais. Identifique gatilhos, tipos de crise e intensidade. Dados: ${behaviorText}`; break;
-                case 'SCHOOL_ANALYSIS': promptContext = `Analise apenas os dados do diário escolar. Identifique padrões de socialização, participação e ocorrências. Dados: ${schoolText}`; break;
+                case 'SCHOOL_ANALYSIS': promptContext = `Analise apenas os dados do diário escolar. Identifique padrões de socialização, participação e eventos de sensibilidade. Dados: ${schoolText}`; break;
                 case 'PROFESSIONAL_ANALYSIS': promptContext = `Analise apenas os dados das sessões terapêuticas realizadas POR MIM. Identifique progressos nas metas, consistência no atendimento e observações clínicas. Dados: ${sessionText}`; break;
                 case 'MULTI_ANALYSIS': promptContext = `Analise apenas os dados de sessões de OUTROS profissionais da equipe multidisciplinar. Busque por insights, abordagens complementares ou divergentes. Dados: ${multiText}`; break;
                 case 'COMBINED': promptContext = `Faça uma análise integrada correlacionando: 1. Humor da criança: ${moodText} 2. Comportamento em Casa: ${behaviorText} 3. Desempenho Escolar: ${schoolText} 4. Minhas Sessões: ${sessionText} 5. Dados Multidisciplinares: ${multiText} Busque conexões entre os ambientes.`; break;
@@ -853,13 +853,13 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
                                                 <div key={log.id} className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
                                                     <div className="flex justify-between items-center mb-3">
                                                         <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded">{new Date(log.date + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
-                                                        {log.dysregulationCount > 0 && (<span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> {log.dysregulationCount} Ocorrência(s)</span>)}
+                                                        {log.dysregulationCount > 0 && (<span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> {log.dysregulationCount} Evento(s) de Sensibilidade</span>)}
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-3 mb-3">
                                                         <div className="bg-blue-50 p-2 rounded-lg"><p className="text-[10px] text-blue-600 font-bold uppercase mb-0.5">Interação Social</p><p className="text-sm font-semibold text-blue-800">{log.socialInteraction}</p></div>
                                                         <div className="bg-green-50 p-2 rounded-lg"><p className="text-[10px] text-green-600 font-bold uppercase mb-0.5">Participação</p><p className="text-sm font-semibold text-blue-800">{log.participation}</p></div>
                                                     </div>
-                                                    {log.dysregulationDetails && log.dysregulationCount > 0 && (<div className="mb-3 text-sm"><p className="text-xs font-bold text-red-600 mb-1">⚠️ Detalhes da Ocorrência:</p><p className="text-slate-600 bg-red-50 p-2 rounded border border-red-100">{log.dysregulationDetails}</p></div>)}
+                                                    {log.dysregulationDetails && log.dysregulationCount > 0 && (<div className="mb-3 text-sm"><p className="text-xs font-bold text-red-600 mb-1">⚠️ Detalhes do Evento:</p><p className="text-slate-600 bg-red-50 p-2 rounded border border-red-100">{log.dysregulationDetails}</p></div>)}
                                                     {log.successfulStrategies && (<div className="mb-3 text-sm"><p className="text-xs font-bold text-teal-600 mb-1">💡 Estratégias Úteis:</p><p className="text-slate-600 bg-teal-50 p-2 rounded border border-teal-100">{log.successfulStrategies}</p></div>)}
                                                     {log.generalNotes && (<div className="text-sm"><p className="text-xs font-bold text-slate-500 mb-1">📝 Observações Gerais:</p><p className="text-slate-600 italic">"{log.generalNotes}"</p></div>)}
                                                 </div>

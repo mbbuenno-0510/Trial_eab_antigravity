@@ -604,7 +604,7 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                     <div className="flex items-center gap-2">
                         {log.dysregulationCount > 0 && (
                             <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">
-                                {log.dysregulationCount} Ocorrência(s)
+                                {log.dysregulationCount} Evento(s) de Sensibilidade
                             </span>
                         )}
                         {/* Ações de Edição/Exclusão para registros de HOJE */}
@@ -635,7 +635,7 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
 
                 {log.dysregulationCount > 0 && log.dysregulationDetails && (
                     <div className="bg-red-50 p-2 rounded text-xs text-red-800 mt-1 mb-1 border border-red-100">
-                        <strong>⚠️ Ocorrência:</strong> {log.dysregulationDetails}
+                        <strong>⚠️ Evento:</strong> {log.dysregulationDetails}
                     </div>
                 )}
 
@@ -1018,10 +1018,10 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                                 </div>
                             </div>
 
-                            {/* Ocorrências */}
+                            {/* Eventos de Sensibilidade */}
                             <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
                                 <label className="block text-sm font-bold text-orange-800 mb-2 flex items-center gap-2">
-                                    <AlertOctagon className="w-4 h-4"/> Ocorrências de Desregulação
+                                    <AlertOctagon className="w-4 h-4"/> Eventos de Sensibilidade
                                 </label>
                                 <div className="flex items-center gap-4 mb-3">
                                     <button 
@@ -1036,7 +1036,7 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                                 </div>
                                 {dysregulationCount > 0 && (
                                     <TextArea 
-                                        label="Detalhes da Ocorrência"
+                                        label="Detalhes do Evento"
                                         placeholder="O que aconteceu? Qual foi o gatilho?"
                                         value={dysregulationDetails}
                                         onChange={e => setDysregulationDetails(e.target.value)}
@@ -1256,7 +1256,7 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
 
                     <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
                         <label className="block text-sm font-bold text-orange-800 mb-2 flex items-center gap-2">
-                            <AlertOctagon className="w-4 h-4"/> Ocorrências
+                            <AlertOctagon className="w-4 h-4"/> Eventos de Sensibilidade
                         </label>
                         <div className="flex items-center gap-4 mb-2">
                             <button onClick={() => setEditDysregulationCount(Math.max(0, editDysregulationCount - 1))} className="w-8 h-8 bg-white rounded-full border border-orange-200 text-orange-600 font-bold">-</button>
