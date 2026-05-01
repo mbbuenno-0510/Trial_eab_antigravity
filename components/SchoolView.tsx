@@ -792,9 +792,20 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                     
                     {/* CAIXA DE SELEÇÃO DE ALUNOS (DROPDOWN + BUSCA RA + COMPLEMENTAR) */}
                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                            <Users className="w-4 h-4 text-purple-600"/> Selecionar Aluno
-                        </label>
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="block text-sm font-bold text-slate-700 flex items-center gap-2">
+                                <Users className="w-4 h-4 text-purple-600"/> Selecionar Aluno
+                            </label>
+                            {!selectedStudentId && (
+                                <button 
+                                    onClick={handleLogout}
+                                    className="text-red-400 hover:text-red-600 transition-colors flex items-center gap-1 text-xs font-bold px-2 py-1 rounded hover:bg-red-50"
+                                    title="Sair da Conta"
+                                >
+                                    <LogOut className="w-4 h-4"/> Sair
+                                </button>
+                            )}
+                        </div>
                         
                         {fetchError && (
                             <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700 mb-3">

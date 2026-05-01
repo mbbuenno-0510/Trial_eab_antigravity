@@ -675,7 +675,20 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
 
             {activeSubTab === 'overview' && (
                 <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6">
-                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><Users className="w-4 h-4 text-teal-600"/> Selecionar Paciente</label>
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="block text-sm font-bold text-slate-700 flex items-center gap-2">
+                            <Users className="w-4 h-4 text-teal-600"/> Selecionar Paciente
+                        </label>
+                        {!selectedPatientId && (
+                            <button 
+                                onClick={handleLogout}
+                                className="text-red-400 hover:text-red-600 transition-colors flex items-center gap-1 text-xs font-bold px-2 py-1 rounded hover:bg-red-50"
+                                title="Sair da Conta"
+                            >
+                                <LogOut className="w-4 h-4"/> Sair
+                            </button>
+                        )}
+                    </div>
                     {fetchError && <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700 mb-3"><AlertOctagon className="w-4 h-4 flex-shrink-0" /><span>{fetchError}</span></div>}
                     <div className="relative mb-4">
                         <select value={selectedPatientId || ''} onChange={(e) => onSelectPatient && onSelectPatient(e.target.value)} disabled={isLoadingPatients} className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 pr-8 rounded-xl leading-tight focus:outline-none focus:bg-white focus:border-teal-500 font-bold disabled:opacity-50">
