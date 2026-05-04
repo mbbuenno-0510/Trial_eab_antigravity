@@ -2,7 +2,6 @@ import React from 'react';
 import { TherapeuticGuideline } from '../types';
 import { Card, Button } from './ui';
 import { AlertCircle, CheckCircle, XCircle, Brain, BookOpen, Users, Utensils, MessageCircle, Check } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface GuidelineCardProps {
   guideline: TherapeuticGuideline;
@@ -46,11 +45,7 @@ export const GuidelineCard: React.FC<GuidelineCardProps> = ({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div>
       <Card className="overflow-hidden border-2 border-transparent hover:border-slate-200 transition-all duration-300">
         {/* Header */}
         <div className="bg-slate-50/80 px-4 py-3 border-b border-slate-100 flex justify-between items-start">
@@ -154,6 +149,6 @@ export const GuidelineCard: React.FC<GuidelineCardProps> = ({
           )}
         </div>
       </Card>
-    </motion.div>
+    </div>
   );
 };
