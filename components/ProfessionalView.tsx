@@ -708,8 +708,16 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
                     <div className="bg-teal-100 p-2 rounded-full"><Users className="w-6 h-6 text-teal-700" /></div>
                     <div><p className="text-xs font-bold text-teal-600 uppercase tracking-wider">Paciente</p><h2 className="text-lg font-black text-teal-900">{childName}</h2></div>
                 </div>
-                <div className="flex flex-col items-end">
-                    <div className="hidden md:block text-right"><p className="text-xs text-teal-600 font-bold">Módulo Terapêutico</p><p className="text-xs text-teal-500">{new Date().toLocaleDateString('pt-BR')}</p></div>
+                <div className="flex flex-col items-end gap-2">
+                    <div className="hidden md:flex items-center gap-3">
+                        <div className="text-right">
+                            <p className="text-xs text-teal-600 font-bold">Módulo Terapêutico</p>
+                            <p className="text-xs text-teal-500">{new Date().toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <button onClick={handleLogout} className="text-teal-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-all" title="Sair da Conta">
+                            <LogOut className="w-5 h-5" />
+                        </button>
+                    </div>
                     <button onClick={handleLogout} className="md:hidden text-teal-600 p-1" title="Sair"><LogOut className="w-5 h-5" /></button>
                 </div>
             </div>
@@ -720,15 +728,13 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
                         <label className="block text-sm font-bold text-slate-700 flex items-center gap-2">
                             <Users className="w-4 h-4 text-teal-600"/> Selecionar Paciente
                         </label>
-                        {!selectedPatientId && (
-                            <button 
-                                onClick={handleLogout}
-                                className="text-red-400 hover:text-red-600 transition-colors flex items-center gap-1 text-xs font-bold px-2 py-1 rounded hover:bg-red-50"
-                                title="Sair da Conta"
-                            >
-                                <LogOut className="w-4 h-4"/> Sair
-                            </button>
-                        )}
+                        <button 
+                            onClick={handleLogout}
+                            className="text-red-400 hover:text-red-600 transition-colors flex items-center gap-1 text-xs font-bold px-2 py-1 rounded hover:bg-red-50"
+                            title="Sair da Conta"
+                        >
+                            <LogOut className="w-4 h-4"/> Sair da Conta
+                        </button>
                     </div>
                     {fetchError && <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700 mb-3"><AlertOctagon className="w-4 h-4 flex-shrink-0" /><span>{fetchError}</span></div>}
                     <div className="relative mb-4">

@@ -255,7 +255,20 @@ const AppContent: React.FC = () => {
                 <div className="flex-1 w-full space-y-2 px-3">
                     {navItems.filter(item => item.show).map(item => (<button key={item.id} onClick={() => setCurrentView(item.id as ViewState)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group relative ${currentView === item.id ? `${activeLightBg} ${activeColor} shadow-sm font-bold` : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium'}`} title={item.label}><item.icon className={`w-6 h-6 flex-shrink-0 ${currentView === item.id ? 'stroke-2' : 'stroke-[1.5]'}`} /><span className="hidden lg:block text-sm">{item.label}</span>{currentView === item.id && (<div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full hidden lg:block ${activeBg}`}></div>)}</button>))}
                 </div>
-                <div className="mt-auto px-3 border-t border-slate-100 pt-4"><div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50/50"><div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">{userProfile?.displayName?.charAt(0) || 'U'}</div><div className="hidden lg:block overflow-hidden"><p className="text-xs font-bold text-slate-700 truncate">{userProfile?.displayName}</p><p className="text-[10px] text-slate-400 capitalize">{userProfile?.profileType === 'CHILD' ? 'Criança' : userProfile?.profileType === 'Health' ? 'Profissional' : userProfile?.profileType === 'School' ? 'Escola' : 'Responsável'}</p></div></div></div>
+                <div className="mt-auto px-3 border-t border-slate-100 pt-4">
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50/50">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 shrink-0">{userProfile?.displayName?.charAt(0) || 'U'}</div>
+                            <div className="hidden lg:block overflow-hidden">
+                                <p className="text-xs font-bold text-slate-700 truncate">{userProfile?.displayName}</p>
+                                <p className="text-[10px] text-slate-400 capitalize">{userProfile?.profileType === 'CHILD' ? 'Criança' : userProfile?.profileType === 'Health' ? 'Profissional' : userProfile?.profileType === 'School' ? 'Escola' : 'Responsável'}</p>
+                            </div>
+                        </div>
+                        <button onClick={() => auth.signOut()} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Sair">
+                            <LogOut className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
             </aside>
             
             <main className="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-50">
