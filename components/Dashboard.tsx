@@ -10,6 +10,9 @@ import DashboardSummaryCard from './DashboardSummaryCard';
 import NextTherapyCard from './NextTherapyCard';
 import LastDiaryCard from './LastDiaryCard';
 import { Card, Button } from './ui'; 
+import { GuidelineCard } from './GuidelineCard';
+import { db } from '../services/firebase';
+import firebase from 'firebase/compat/app';
 
 // Hooks e Tipos
 import { auth } from '../services/firebase'; 
@@ -34,7 +37,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
         pendingTasks, 
         totalDocuments,
         upcomingTherapies, 
-        lastDiaryEntry 
+        lastDiaryEntry,
+        therapeuticGuidelines
     } = useDashboardData(userProfile);
 
     const { isInstallable, isStandalone, installPWA } = usePWAInstall();
@@ -48,6 +52,37 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
             await auth.signOut(); 
         } catch (error) {
             console.error("Erro ao fazer logout:", error);
+        }
+    };
+
+    const handleMarkGuidelineAsRead = async (guidelineId: string) => {
+        if (!userProfile || !userProfile.manages || userProfile.manages.length === 0) return;
+        const targetUid = userProfile.manages[0];
+        try {
+            await db.collection('users').doc(targetUid).collection('therapeutic_guidelines').doc(guidelineId).update({
+                readByParents: true
+            });
+        } catch (error) {
+            console.error("Error marking guideline as read:", error);
+        }
+    };
+
+    const handleProvideGuidelineFeedback = async (guidelineId: string, workedWell: boolean, notes?: string) => {
+        if (!userProfile || !userProfile.manages || userProfile.manages.length === 0) return;
+        const targetUid = userProfile.manages[0];
+        const feedback = {
+            date: new Date().toISOString().split('T')[0],
+            role: 'Parent',
+            workedWell,
+            notes: notes || ''
+        };
+
+        try {
+            await db.collection('users').doc(targetUid).collection('therapeutic_guidelines').doc(guidelineId).update({
+                effectivenessFeedback: firebase.firestore.FieldValue.arrayUnion(feedback)
+            });
+        } catch (error) {
+            console.error("Error providing guideline feedback:", error);
         }
     };
     
@@ -111,6 +146,27 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
                     <DashboardSummaryCard title="Documentos" value={totalDocuments} icon="Document" />
                 </div>
             </div>
+
+            {/* 2.5 DIRETRIZES TERAPÊUTICAS (Dicas do Terapeuta) */}
+            {therapeuticGuidelines.length > 0 && (
+                <div className="mb-8">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Sparkles className="w-5 h-5 text-amber-500" />
+                        <h3 className="text-lg font-bold text-slate-700">Como eu funciono (Dicas do Terapeuta)</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {therapeuticGuidelines.map(guideline => (
+                            <GuidelineCard 
+                                key={guideline.id}
+                                guideline={guideline}
+                                userRole="Parent"
+                                onMarkAsRead={handleMarkGuidelineAsRead}
+                                onProvideFeedback={handleProvideGuidelineFeedback}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* 3. CARTÕES DE DESTAQUE (Next Appointment & Last Diary) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'; 
-import { UserProfile, Appointment, MoodEntry, Therapy } from '../types'; 
+import { UserProfile, Appointment, MoodEntry, Therapy, TherapeuticGuideline } from '../types'; 
 import { db } from '../services/firebase'; 
 import { decryptData } from '../services/security';
 
@@ -11,6 +11,7 @@ interface DashboardData {
     totalDocuments: number;
     upcomingTherapies: Appointment[]; 
     lastDiaryEntry: MoodEntry | null;
+    therapeuticGuidelines: TherapeuticGuideline[];
     loading: boolean;
 }
 
@@ -114,6 +115,7 @@ export const useDashboardData = (userProfile: UserProfile | null): DashboardData
         totalDocuments: 0, 
         upcomingTherapies: [],
         lastDiaryEntry: null,
+        therapeuticGuidelines: [],
         loading: true,
     });
     
@@ -221,6 +223,15 @@ export const useDashboardData = (userProfile: UserProfile | null): DashboardData
             });
 
             setData(prev => ({ ...prev, pendingTasks: pendingCount }));
+        }));
+
+        // THERAPEUTIC GUIDELINES
+        const guidelinesCollectionRef = db.collection('users').doc(uid).collection('therapeutic_guidelines');
+        unsubscribes.push(guidelinesCollectionRef.onSnapshot((snapshot) => {
+            const guidelines = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TherapeuticGuideline));
+            // Filter for guidelines that should be visible to parents
+            const visibleToParents = guidelines.filter(g => g.targetAudience === 'Parents' || g.targetAudience === 'Both');
+            setData(prev => ({ ...prev, therapeuticGuidelines: visibleToParents }));
         }));
 
         return () => unsubscribes.forEach(unsub => unsub());

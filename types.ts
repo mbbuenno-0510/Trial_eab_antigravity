@@ -335,6 +335,34 @@ export interface SessionLog {
   moodRating?: 'Bom' | 'Regular' | 'Difícil';
 }
 
+export type GuidelineCategory = 'Behavior' | 'Sensory' | 'Social' | 'Academic' | 'Food';
+export type GuidelineTargetAudience = 'School' | 'Parents' | 'Both';
+
+export interface TherapeuticGuideline {
+  id: string;
+  patientId: string; // The child's UID
+  professionalId: string;
+  professionalName: string;
+  category: GuidelineCategory;
+  title: string; // Ex: "Manejo de Crise Sensorial"
+  trigger: string; // Ex: "Barulhos excessivos no recreio"
+  actionPlan: string; // Ex: "Oferecer o abafador e levar ao cantinho do silêncio"
+  avoid: string; // Ex: "Evitar contato visual direto"
+  targetAudience: GuidelineTargetAudience; 
+  createdAt: number | Date | FirestoreTimestamp;
+  updatedAt: number | Date | FirestoreTimestamp;
+  
+  // Feedback tracking
+  readByParents?: boolean;
+  readBySchool?: boolean;
+  effectivenessFeedback?: {
+    date: string; // YYYY-MM-DD
+    role: 'Parent' | 'School';
+    workedWell: boolean;
+    notes?: string;
+  }[];
+}
+
 // --- MÓDULO ESCOLAR ---
 export interface SchoolLog {
   id: string;

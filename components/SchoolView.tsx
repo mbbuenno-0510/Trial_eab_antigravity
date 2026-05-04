@@ -1,13 +1,14 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { UserProfile, SchoolLog, ChildExtendedProfile, Medication, StoredDocument, SchoolMedicationLog } from '../types';
+import { UserProfile, SchoolLog, ChildExtendedProfile, Medication, StoredDocument, SchoolMedicationLog, TherapeuticGuideline } from '../types';
 import { db, auth } from '../services/firebase';
+import firebase from 'firebase/compat/app';
 import { 
     GraduationCap, Users, BookOpen, AlertOctagon, Lightbulb, 
     Save, Calendar, LogOut, ChevronDown, Loader2, ExternalLink, Hash, Search, ArrowRight, Plus, Trash2, Edit2, Pill, FileText, CheckCircle, Clock, Activity, AlertTriangle
 } from 'lucide-react';
 import { Card, Button, Input, TextArea, Modal, Select } from './ui';
 import DocumentViewModal from './DocumentViewModal'; // Import para visualizar receitas
+import { GuidelineCard } from './GuidelineCard';
 
 interface SchoolViewProps {
     userProfile: UserProfile;
@@ -106,6 +107,9 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
     // --- NOVO: ESTADOS PARA MODAL DE CONFIRMAÇÃO DE ADMINISTRAÇÃO ---
     const [isConfirmAdministerModalOpen, setIsConfirmAdministerModalOpen] = useState(false);
     const [administerData, setAdministerData] = useState<{ med: Medication, date: string, time: string } | null>(null);
+
+    // --- NOVO: ESTADOS PARA DIRETRIZES TERAPÊUTICAS ---
+    const [therapeuticGuidelines, setTherapeuticGuidelines] = useState<TherapeuticGuideline[]>([]);
 
     // Estados para Visualização de Documento (Receita)
     const [isDocumentViewModalOpen, setDocumentViewModalOpen] = useState(false);
@@ -426,11 +430,49 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                 console.error("Erro ao ler logs de medicação:", error);
             });
 
+        // Fetch Therapeutic Guidelines
+        const unsubGuidelines = db.collection('users').doc(targetUid).collection('therapeutic_guidelines')
+            .onSnapshot(snap => {
+                const guidelines = snap.docs.map(d => ({ id: d.id, ...d.data() } as TherapeuticGuideline));
+                // Filtrar apenas o que é visível para a escola
+                setTherapeuticGuidelines(guidelines.filter(g => g.targetAudience === 'School' || g.targetAudience === 'Both'));
+            });
+
         return () => {
             unsubLogs();
             unsubMedLogs();
+            unsubGuidelines();
         };
     }, [targetUid, availableStudents]);
+
+    const handleMarkGuidelineAsRead = async (guidelineId: string) => {
+        if (!targetUid) return;
+        try {
+            await db.collection('users').doc(targetUid).collection('therapeutic_guidelines').doc(guidelineId).update({
+                readBySchool: true
+            });
+        } catch (error) {
+            console.error("Error marking guideline as read:", error);
+        }
+    };
+
+    const handleProvideGuidelineFeedback = async (guidelineId: string, workedWell: boolean, notes?: string) => {
+        if (!targetUid) return;
+        const feedback = {
+            date: new Date().toISOString().split('T')[0],
+            role: 'School',
+            workedWell,
+            notes: notes || ''
+        };
+
+        try {
+            await db.collection('users').doc(targetUid).collection('therapeutic_guidelines').doc(guidelineId).update({
+                effectivenessFeedback: firebase.firestore.FieldValue.arrayUnion(feedback)
+            });
+        } catch (error) {
+            console.error("Error providing guideline feedback:", error);
+        }
+    };
 
     const handleSaveLog = async () => {
         if (!targetUid) return;
@@ -890,6 +932,27 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                             </Button>
                         </div>
                     </div>
+
+                    {/* --- DIRETRIZES TERAPÊUTICAS (Dicas do Terapeuta) --- */}
+                    {selectedStudentId && therapeuticGuidelines.length > 0 && (
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Lightbulb className="w-5 h-5 text-amber-500" />
+                                <h3 className="text-lg font-bold text-slate-700">Diretrizes de Manejo (Dicas do Terapeuta)</h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {therapeuticGuidelines.map(guideline => (
+                                    <GuidelineCard 
+                                        key={guideline.id}
+                                        guideline={guideline}
+                                        userRole="School"
+                                        onMarkAsRead={handleMarkGuidelineAsRead}
+                                        onProvideFeedback={handleProvideGuidelineFeedback}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* --- MEDICAMENTOS PARA ADMINISTRAÇÃO ESCOLAR (NOVO) --- */}
                     {selectedStudentId && schoolMedications.length > 0 && (

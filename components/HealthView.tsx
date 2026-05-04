@@ -1,14 +1,15 @@
 
 import React, { useState, useMemo, useEffect, FC, ReactElement } from 'react';
-import { Appointment, Therapy, Medication, DOSAGE_UNITS, UserProfile, ProfileType, StoredDocument, TherapyTask, SchoolMedicationLog } from '../types';
+import { Appointment, Therapy, Medication, DOSAGE_UNITS, UserProfile, ProfileType, StoredDocument, TherapyTask, SchoolMedicationLog, TherapeuticGuideline } from '../types';
 // Assumindo que Card, Button, Input, Select, Modal, TextArea são componentes UI externos
 import { Card, Button, Input, Select, Modal, TextArea } from './ui'; 
 import { db, storage } from '../services/firebase';
 // Importação de ícones
-import { Trash2, Edit2, Plus, Clock, Calendar, Check, Paperclip, X, Pill, Stethoscope, Box, Puzzle, Loader2, AlertTriangle, School, GraduationCap, Info, FileText } from 'lucide-react'; 
+import { Trash2, Edit2, Plus, Clock, Calendar, Check, Paperclip, X, Pill, Stethoscope, Box, Puzzle, Loader2, AlertTriangle, School, GraduationCap, Info, FileText, BookOpen } from 'lucide-react'; 
 
 // Importação do componente real DocumentViewModal
 import DocumentViewModal from './DocumentViewModal'; 
+import { GuidelineFormModal } from './GuidelineFormModal';
 
 interface HealthViewProps {
     userProfile: UserProfile | null;
@@ -43,7 +44,7 @@ const CATEGORY_BADGES: Record<string, string> = {
 // ====================================================================
 
 interface DynamicIconProps {
-    tab: 'meds' | 'stock' | 'appointments' | 'therapies' | 'school_history';
+    tab: 'meds' | 'stock' | 'appointments' | 'therapies' | 'school_history' | 'guidelines';
 }
 
 const HealthDynamicTabIcon: FC<DynamicIconProps> = ({ tab }) => {
@@ -53,6 +54,7 @@ const HealthDynamicTabIcon: FC<DynamicIconProps> = ({ tab }) => {
         'therapies': { icon: <Puzzle className="w-6 h-6" />, gradient: 'from-green-500 to-teal-600', shadowColor: 'shadow-green-500/50' }, 
         'stock': { icon: <Box className="w-6 h-6" />, gradient: 'from-orange-500 to-amber-600', shadowColor: 'shadow-orange-500/50' },
         'school_history': { icon: <GraduationCap className="w-6 h-6" />, gradient: 'from-purple-500 to-indigo-600', shadowColor: 'shadow-purple-500/50' },
+        'guidelines': { icon: <BookOpen className="w-6 h-6" />, gradient: 'from-yellow-400 to-orange-500', shadowColor: 'shadow-yellow-500/50' },
     };
 
     const { icon, gradient, shadowColor } = iconMap[tab];
@@ -684,26 +686,28 @@ const TherapyModal: React.FC<TherapyModalProps> = ({ initialTherapy, targetUid, 
 // ===============================================
 
 const HealthView: React.FC<HealthViewProps> = ({ userProfile }) => {
-    const [activeTab, setActiveTab] = useState<'meds' | 'stock' | 'appointments' | 'therapies' | 'school_history'>('meds');
+    const [activeTab, setActiveTab] = useState<'meds' | 'stock' | 'appointments' | 'therapies' | 'school_history' | 'guidelines'>('meds');
 
     // Data States
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [therapies, setTherapies] = useState<Therapy[]>([]);
     const [medications, setMedications] = useState<Medication[]>([]);
     const [schoolMedLogs, setSchoolMedLogs] = useState<SchoolMedicationLog[]>([]);
+    const [guidelines, setGuidelines] = useState<TherapeuticGuideline[]>([]);
 
     // Modals
     const [isApptModalOpen, setApptModalOpen] = useState(false);
     const [isTherapyModalOpen, setTherapyModalOpen] = useState(false);
     const [isMedModalOpen, setMedModalOpen] = useState(false);
     const [isStockModalOpen, setStockModalOpen] = useState(false);
+    const [isGuidelineModalOpen, setGuidelineModalOpen] = useState(false);
     
     // Estados para Visualização de Documento
     const [isDocumentViewModalOpen, setDocumentViewModalOpen] = useState(false);
     const [documentToView, setDocumentToView] = useState<StoredDocument | null>(null);
     
     // Confirmação de Exclusão
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{ type: 'appointment' | 'therapy' | 'medication', id: string, title: string } | null>(null);
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ type: 'appointment' | 'therapy' | 'medication' | 'guideline', id: string, title: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     
     // Terapia Tasks
@@ -714,6 +718,7 @@ const HealthView: React.FC<HealthViewProps> = ({ userProfile }) => {
     const [currentTherapy, setCurrentTherapy] = useState<Therapy | Partial<Therapy>>({});
     const [currentMed, setCurrentMed] = useState<Medication | Partial<Medication>>({});
     const [currentMedToEditStock, setCurrentMedToEditStock] = useState<Medication | null>(null);
+    const [currentGuideline, setCurrentGuideline] = useState<TherapeuticGuideline | undefined>(undefined);
 
     const [childDisplayName, setChildDisplayName] = useState<string | null>(null);
 
@@ -758,7 +763,12 @@ const HealthView: React.FC<HealthViewProps> = ({ userProfile }) => {
                     setSchoolMedLogs(snap.docs.map(d => ({ id: d.id, ...d.data() } as SchoolMedicationLog)));
                 });
         }
-        return () => { unsubMeds(); unsubAppts(); unsubTherapies(); unsubSchoolLogs(); };
+        
+        const unsubGuidelines = db.collection('users').doc(targetUid).collection('therapeutic_guidelines').onSnapshot((snap) => {
+            setGuidelines(snap.docs.map(d => ({ id: d.id, ...d.data() } as TherapeuticGuideline)));
+        });
+
+        return () => { unsubMeds(); unsubAppts(); unsubTherapies(); unsubSchoolLogs(); unsubGuidelines(); };
     }, [targetUid, userProfile?.profileType]);
     
     // Handlers
@@ -798,12 +808,40 @@ const HealthView: React.FC<HealthViewProps> = ({ userProfile }) => {
     const closeMedModal = () => { setMedModalOpen(false); setCurrentMed({}); };
     const requestDeleteMedication = (id: string, name: string) => setDeleteConfirmation({ type: 'medication', id, title: name });
 
+    const handleOpenNewGuidelineModal = () => { setCurrentGuideline(undefined); setGuidelineModalOpen(true); };
+    const handleEditGuideline = (g: TherapeuticGuideline) => { setCurrentGuideline(g); setGuidelineModalOpen(true); };
+    const requestDeleteGuideline = (id: string, title: string) => setDeleteConfirmation({ type: 'guideline', id, title });
+
+    const handleSaveGuideline = async (guidelineData: Partial<TherapeuticGuideline>) => {
+        if (!targetUid || !userProfile) return;
+        const data = {
+            ...guidelineData,
+            patientId: targetUid,
+            professionalId: userProfile.uid,
+            professionalName: userProfile.displayName || 'Profissional',
+            updatedAt: Date.now()
+        };
+
+        if (currentGuideline?.id) {
+            await db.collection('users').doc(targetUid).collection('therapeutic_guidelines').doc(currentGuideline.id).update(data);
+        } else {
+            await db.collection('users').doc(targetUid).collection('therapeutic_guidelines').add({
+                ...data,
+                createdAt: Date.now(),
+                readByParents: false,
+                readBySchool: false,
+                effectivenessFeedback: []
+            });
+        }
+    };
+
     const handleConfirmDelete = async () => {
         if (!deleteConfirmation || !targetUid) return;
         setIsDeleting(true);
         try {
             if (deleteConfirmation.type === 'appointment') await db.collection('users').doc(targetUid).collection('appointments').doc(deleteConfirmation.id).delete();
             else if (deleteConfirmation.type === 'therapy') await db.collection('users').doc(targetUid).collection('therapies').doc(deleteConfirmation.id).delete();
+            else if (deleteConfirmation.type === 'guideline') await db.collection('users').doc(targetUid).collection('therapeutic_guidelines').doc(deleteConfirmation.id).delete();
             else if (deleteConfirmation.type === 'medication') {
                  const medToDelete = medications.find(m => m.id === deleteConfirmation.id);
                  if (medToDelete && medToDelete.storagePath) {
@@ -868,9 +906,9 @@ const HealthView: React.FC<HealthViewProps> = ({ userProfile }) => {
     }, [therapies]);
     const sortedAppointments = useMemo(() => [...appointments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()), [appointments]);
     
-    const getTabLabel = (tab: 'meds' | 'stock' | 'appointments' | 'therapies' | 'school_history'): string => {
+    const getTabLabel = (tab: 'meds' | 'stock' | 'appointments' | 'therapies' | 'school_history' | 'guidelines'): string => {
         switch (tab) {
-            case 'meds': return 'Medicação'; case 'stock': return 'Estoque'; case 'appointments': return 'Consultas'; case 'therapies': return 'Terapias'; case 'school_history': return 'Escola'; default: return '';
+            case 'meds': return 'Medicação'; case 'stock': return 'Estoque'; case 'appointments': return 'Consultas'; case 'therapies': return 'Terapias'; case 'school_history': return 'Escola'; case 'guidelines': return 'Diretrizes'; default: return '';
         }
     };
     const showSchoolTab = userProfile?.profileType === ProfileType.ADULT;
@@ -885,7 +923,7 @@ const HealthView: React.FC<HealthViewProps> = ({ userProfile }) => {
             )}
 
             <div className="flex justify-between p-2 bg-white rounded-3xl w-full shadow-lg border border-slate-100 mb-6 overflow-x-auto">
-                {(['meds', 'stock', 'appointments', 'therapies', ...(showSchoolTab ? ['school_history'] : [])] as const).map(tab => (
+                {(['meds', 'stock', 'appointments', 'therapies', 'guidelines', ...(showSchoolTab ? ['school_history'] : [])] as const).map(tab => (
                     <div className="relative flex-1 flex flex-col items-center min-w-[60px]" key={tab}>
                         <button onClick={() => setActiveTab(tab as any)} className={`py-1 px-1 rounded-2xl flex flex-col items-center justify-center transition-all duration-200 relative z-10 ${activeTab === tab ? 'scale-110' : 'opacity-70 hover:opacity-100 hover:bg-slate-50'}`}>
                             <HealthDynamicTabIcon tab={tab as any} />
@@ -1123,6 +1161,75 @@ const HealthView: React.FC<HealthViewProps> = ({ userProfile }) => {
                 </div>
             )}
 
+            {/* 6. DIRETRIZES TERAPÊUTICAS */}
+            {activeTab === 'guidelines' && (
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-bold text-slate-700">Diretrizes de Manejo</h3>
+                        <Button onClick={handleOpenNewGuidelineModal} className="bg-yellow-500 hover:bg-yellow-600">
+                            <Plus className="w-4 h-4 mr-2"/> Nova
+                        </Button>
+                    </div>
+                    {guidelines.length === 0 ? (
+                        <div className="text-center py-10 bg-white rounded-xl border border-dashed border-slate-300 text-slate-400">
+                            <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-50"/>
+                            <p>Nenhuma diretriz criada para este paciente.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-4">
+                            {guidelines.map(g => (
+                                <Card key={g.id} className="relative overflow-hidden border-l-4 border-l-yellow-400">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                                                {g.category}
+                                            </span>
+                                            <h4 className="text-lg font-black text-slate-800 mt-1">
+                                                {g.title}
+                                            </h4>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                Público: <span className="font-bold">{g.targetAudience === 'Both' ? 'Pais e Escola' : g.targetAudience === 'Parents' ? 'Pais' : 'Escola'}</span>
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button onClick={() => handleEditGuideline(g)} className="p-2 text-slate-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg"><Edit2 className="w-4 h-4"/></button>
+                                            <button onClick={() => requestDeleteGuideline(g.id, g.title)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4"/></button>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 mt-3">
+                                        <div className="bg-slate-50 p-2 rounded">
+                                            <span className="text-[10px] font-bold text-slate-500 block mb-0.5 uppercase">Gatilho</span>
+                                            <p className="text-sm text-slate-700">{g.trigger}</p>
+                                        </div>
+                                        <div className="bg-green-50/50 p-2 rounded border border-green-100">
+                                            <span className="text-[10px] font-bold text-green-700 block mb-0.5 uppercase">O que fazer</span>
+                                            <p className="text-sm text-green-800">{g.actionPlan}</p>
+                                        </div>
+                                        <div className="bg-red-50/50 p-2 rounded border border-red-100">
+                                            <span className="text-[10px] font-bold text-red-700 block mb-0.5 uppercase">O que EVITAR</span>
+                                            <p className="text-sm text-red-800">{g.avoid}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 mt-3 pt-3 border-t border-slate-100 text-[10px] text-slate-500">
+                                        <span className="flex items-center gap-1">
+                                            <Check className={`w-3 h-3 ${g.readByParents ? 'text-green-500' : 'text-slate-300'}`} />
+                                            Lido (Pais)
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <Check className={`w-3 h-3 ${g.readBySchool ? 'text-green-500' : 'text-slate-300'}`} />
+                                            Lido (Escola)
+                                        </span>
+                                        <span className="flex items-center gap-1 ml-auto font-bold text-blue-600">
+                                            {g.effectivenessFeedback?.length || 0} Feedbacks
+                                        </span>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* MODAIS */}
             <Modal isOpen={isMedModalOpen} onClose={closeMedModal} title={currentMed.id ? "Editar Medicamento" : "Novo Medicamento"}>
                 <MedicationForm initialMed={currentMed as Medication} targetUid={targetUid} onClose={closeMedModal} />
@@ -1165,6 +1272,14 @@ const HealthView: React.FC<HealthViewProps> = ({ userProfile }) => {
 
             {isApptModalOpen && <AppointmentModal initialAppt={currentAppt as Appointment} targetUid={targetUid} onClose={closeApptModal} />}
             {isTherapyModalOpen && <TherapyModal initialTherapy={currentTherapy as Therapy} targetUid={targetUid} onClose={closeTherapyModal} />}
+            {isGuidelineModalOpen && (
+                <GuidelineFormModal
+                    isOpen={isGuidelineModalOpen}
+                    onClose={() => setGuidelineModalOpen(false)}
+                    initialData={currentGuideline}
+                    onSave={handleSaveGuideline}
+                />
+            )}
             
             <Modal isOpen={!!deleteConfirmation} onClose={() => setDeleteConfirmation(null)} title="Confirmar Exclusão">
                 <div className="space-y-4">
