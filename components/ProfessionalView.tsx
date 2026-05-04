@@ -1,25 +1,27 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { UserProfile, ProfileType, SessionLog, TherapeuticGoal, GoalType, GoalStatus, ChildExtendedProfile, MoodEntry, BehaviorEntry, SchoolLog } from '../types';
+import { UserProfile, ProfileType, SessionLog, TherapeuticGoal, GoalType, GoalStatus, ChildExtendedProfile, MoodEntry, BehaviorEntry, SchoolLog, TherapeuticGuideline } from '../types';
 import { db, auth } from '../services/firebase';
 import { GoogleGenAI } from "@google/genai";
 import { 
     LayoutDashboard, ClipboardList, Target, LineChart, 
     Plus, Save, CheckCircle2, Clock, Brain, MessageCircle, 
     AlertTriangle, CalendarCheck, FileText, ChevronRight,
-    Users, Activity, Star, LogOut, ChevronDown, Loader2, Search, ExternalLink, Link, AlertOctagon, BookHeart, FileBarChart, Copy, Sparkles, GraduationCap, History, Stethoscope, Network, ShieldCheck, Filter
+    Users, Activity, Star, LogOut, ChevronDown, Loader2, Search, ExternalLink, Link, AlertOctagon, BookHeart, FileBarChart, Copy, Sparkles, GraduationCap, History, Stethoscope, Network, ShieldCheck, Filter, Edit2, Trash2
 } from 'lucide-react';
 import { Card, Button, Input, TextArea, Select, Modal } from './ui';
 import MoodDiary from './MoodDiary';
 import BehaviorDiary from './BehaviorDiary';
 import RoutinesView from './RoutinesView';
+import { GuidelineFormModal } from './GuidelineFormModal';
+import { BookOpen } from 'lucide-react';
 
 // Inicialização da IA
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface ProfessionalViewProps {
     userProfile: UserProfile;
-    activeSubTab: 'overview' | 'session' | 'goals' | 'analysis';
+    activeSubTab: 'overview' | 'session' | 'goals' | 'analysis' | 'guidelines';
     selectedPatientId?: string | null;
     onSelectPatient?: (id: string | null) => void;
 }
@@ -111,8 +113,11 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
     const [rawGoals, setRawGoals] = useState<TherapeuticGoal[]>([]);
     const [rawRecentSessions, setRawRecentSessions] = useState<SessionLog[]>([]);
     const [rawSessionHistoryLogs, setRawSessionHistoryLogs] = useState<SessionLog[]>([]);
+    const [guidelines, setGuidelines] = useState<TherapeuticGuideline[]>([]);
 
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+    const [isGuidelineModalOpen, setGuidelineModalOpen] = useState(false);
+    const [currentGuideline, setCurrentGuideline] = useState<TherapeuticGuideline | undefined>(undefined);
     const [currentGoal, setCurrentGoal] = useState<Partial<TherapeuticGoal>>({ type: 'PTI', status: 'active' });
     const [isSavingGoal, setIsSavingGoal] = useState(false);
 
@@ -326,7 +331,10 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
             .limit(5)
             .onSnapshot(snap => setRawRecentSessions(snap.docs.map(d => ({ id: d.id, ...d.data() } as SessionLog))));
 
-        return () => { unsubProfile(); unsubGoals(); unsubSessions(); };
+        const unsubGuidelines = db.collection('users').doc(targetUid).collection('therapeutic_guidelines')
+            .onSnapshot(snap => setGuidelines(snap.docs.map(d => ({ id: d.id, ...d.data() } as TherapeuticGuideline))));
+
+        return () => { unsubProfile(); unsubGoals(); unsubSessions(); unsubGuidelines(); };
     }, [targetUid, availablePatients]);
 
     useEffect(() => {
@@ -477,6 +485,38 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
             else await db.collection('users').doc(targetUid).collection('therapeutic_goals').add(goalData);
             setIsGoalModalOpen(false); setCurrentGoal({ type: 'PTI', status: 'active' });
         } catch (error) { console.error(error); alert("Erro ao salvar meta."); } finally { setIsSavingGoal(false); }
+    };
+
+    const handleOpenNewGuidelineModal = () => { setCurrentGuideline(undefined); setGuidelineModalOpen(true); };
+    const handleEditGuideline = (g: TherapeuticGuideline) => { setCurrentGuideline(g); setGuidelineModalOpen(true); };
+    const requestDeleteGuideline = async (id: string, title: string) => {
+        if (!targetUid) return;
+        if (confirm(`Deseja excluir a diretriz "${title}"?`)) {
+            await db.collection('users').doc(targetUid).collection('therapeutic_guidelines').doc(id).delete();
+        }
+    };
+
+    const handleSaveGuideline = async (guidelineData: Partial<TherapeuticGuideline>) => {
+        if (!targetUid || !userProfile) return;
+        const data = {
+            ...guidelineData,
+            patientId: targetUid,
+            professionalId: userProfile.uid,
+            professionalName: userProfile.displayName || 'Profissional',
+            updatedAt: Date.now()
+        };
+
+        if (currentGuideline?.id) {
+            await db.collection('users').doc(targetUid).collection('therapeutic_guidelines').doc(currentGuideline.id).update(data);
+        } else {
+            await db.collection('users').doc(targetUid).collection('therapeutic_guidelines').add({
+                ...data,
+                createdAt: Date.now(),
+                readByParents: false,
+                readBySchool: false,
+                effectivenessFeedback: []
+            });
+        }
     };
 
     // --- FUNÇÃO GERAR RELATÓRIO (IA) ---
@@ -995,6 +1035,83 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
                             </div>
                         )}
                     </div>
+                </div>
+            )}
+
+            {activeSubTab === 'guidelines' && (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                            <BookOpen className="w-6 h-6 text-teal-600" /> Diretrizes de Manejo
+                        </h2>
+                        <Button onClick={handleOpenNewGuidelineModal}>
+                            <Plus className="w-4 h-4 mr-2"/> Nova Diretriz
+                        </Button>
+                    </div>
+                    
+                    {guidelines.length === 0 ? (
+                        <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
+                            <p className="text-slate-400">Nenhuma diretriz criada para este paciente.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {guidelines.map(g => (
+                                <Card key={g.id} className="relative overflow-hidden border-l-4 border-l-teal-500">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                                                {g.category}
+                                            </span>
+                                            <h4 className="text-lg font-black text-slate-800 mt-1">
+                                                {g.title}
+                                            </h4>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                Público: <span className="font-bold">{g.targetAudience === 'Both' ? 'Todos' : g.targetAudience === 'Parents' ? 'Pais' : 'Escola'}</span>
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button onClick={() => handleEditGuideline(g)} className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>
+                                            <button onClick={() => requestDeleteGuideline(g.id, g.title)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 mt-3">
+                                        <div className="bg-slate-50 p-2 rounded">
+                                            <span className="text-[10px] font-bold text-slate-500 block mb-0.5 uppercase">Gatilho</span>
+                                            <p className="text-sm text-slate-700">{g.trigger}</p>
+                                        </div>
+                                        <div className="bg-green-50/50 p-2 rounded border border-green-100">
+                                            <span className="text-[10px] font-bold text-green-700 block mb-0.5 uppercase">O que fazer</span>
+                                            <p className="text-sm text-green-800">{g.actionPlan}</p>
+                                        </div>
+                                        <div className="bg-red-50/50 p-2 rounded border border-red-100">
+                                            <span className="text-[10px] font-bold text-red-700 block mb-0.5 uppercase">O que EVITAR</span>
+                                            <p className="text-sm text-red-800">{g.avoid}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 mt-3 pt-3 border-t border-slate-100 text-[10px] text-slate-500">
+                                        <span className="flex items-center gap-1">
+                                            <CheckCircle2 className={`w-3 h-3 ${g.readByParents ? 'text-green-500' : 'text-slate-300'}`} />
+                                            Lido (Pais)
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <CheckCircle2 className={`w-3 h-3 ${g.readBySchool ? 'text-green-500' : 'text-slate-300'}`} />
+                                            Lido (Escola)
+                                        </span>
+                                        <span className="flex items-center gap-1 ml-auto font-bold text-teal-600">
+                                            {g.effectivenessFeedback?.length || 0} Feedbacks
+                                        </span>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+
+                    <GuidelineFormModal
+                        isOpen={isGuidelineModalOpen}
+                        onClose={() => setGuidelineModalOpen(false)}
+                        initialData={currentGuideline}
+                        onSave={handleSaveGuideline}
+                    />
                 </div>
             )}
 

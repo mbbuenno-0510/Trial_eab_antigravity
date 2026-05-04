@@ -19,7 +19,7 @@ import PWAInstallHint from './components/PWAInstallHint';
 
 type ViewState = 
     'dashboard' | 'diary' | 'health' | 'routines' | 'docs' | 'sensory' | 
-    'prof_overview' | 'prof_session' | 'prof_goals' | 'prof_analysis' |
+    'prof_overview' | 'prof_session' | 'prof_goals' | 'prof_analysis' | 'prof_guidelines' |
     'school_home' | 'school_log' | 'school_history';
 
 const NotificationPopup = ({ message, onClose, visible }: { message: string, onClose: () => void, visible: boolean }) => {
@@ -197,6 +197,7 @@ const AppContent: React.FC = () => {
                 case 'prof_session': return <ProfessionalView userProfile={userProfile} activeSubTab="session" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} />;
                 case 'prof_goals': return <ProfessionalView userProfile={userProfile} activeSubTab="goals" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} />;
                 case 'prof_analysis': return <ProfessionalView userProfile={userProfile} activeSubTab="analysis" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} />;
+                case 'prof_guidelines': return <ProfessionalView userProfile={userProfile} activeSubTab="guidelines" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} />;
                 case 'docs': return <DocsView userProfile={userProfile} preSelectedStudentId={selectedChildId} />; 
                 default: return <ProfessionalView userProfile={userProfile} activeSubTab="overview" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} />;
             }
@@ -223,7 +224,14 @@ const AppContent: React.FC = () => {
 
     let navItems = [];
     if (userProfile?.profileType === ProfileType.PROFESSIONAL) {
-        navItems = [ { id: 'prof_overview', label: 'Início', icon: LayoutDashboard, show: true }, { id: 'prof_session', label: 'Sessão', icon: ClipboardList, show: true, special: true }, { id: 'prof_goals', label: 'Metas', icon: Target, show: true }, { id: 'prof_analysis', label: 'Dados', icon: Activity, show: true }, { id: 'docs', label: 'Docs', icon: FileText, show: true } ];
+        navItems = [ 
+            { id: 'prof_overview', label: 'Início', icon: LayoutDashboard, show: true }, 
+            { id: 'prof_session', label: 'Sessão', icon: ClipboardList, show: true, special: true }, 
+            { id: 'prof_goals', label: 'Metas', icon: Target, show: true }, 
+            { id: 'prof_guidelines', label: 'Diretrizes', icon: BookHeart, show: true },
+            { id: 'prof_analysis', label: 'Dados', icon: Activity, show: true }, 
+            { id: 'docs', label: 'Docs', icon: FileText, show: true } 
+        ];
     } else if (userProfile?.profileType === ProfileType.SCHOOL) {
         navItems = [ { id: 'school_home', label: 'Início', icon: LayoutDashboard, show: true }, { id: 'school_log', label: 'Diário', icon: SchoolIcon, show: true, special: true }, { id: 'school_history', label: 'Histórico', icon: History, show: true }, { id: 'docs', label: 'Docs', icon: FileText, show: true } ];
     } else {
