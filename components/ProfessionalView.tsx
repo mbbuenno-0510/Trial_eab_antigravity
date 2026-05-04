@@ -750,6 +750,7 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
             )}
 
             {activeSubTab === 'overview' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card title="🩺 Últimos Registros de Sessão" className="h-full">
                         {recentSessions.length === 0 ? <p className="text-slate-400 text-sm text-center py-8">Nenhuma sessão visível (Seus registros ou compartilhados).</p> : (
                             <div className="space-y-3">
