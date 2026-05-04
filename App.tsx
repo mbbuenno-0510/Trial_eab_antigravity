@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { db, auth, handleFirestoreError, OperationType } from './services/firebase';
 import firebase from 'firebase/compat/app'; // Import for types
-import { LayoutDashboard, BookHeart, HeartPulse, ListTodo, FileText, Loader2, Wind, LogOut, ClipboardList, Target, Activity, School as SchoolIcon, History, X, Bell, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, BookHeart, BookOpen, HeartPulse, ListTodo, FileText, Loader2, Wind, LogOut, ClipboardList, Target, Activity, School as SchoolIcon, History, X, Bell, AlertTriangle } from 'lucide-react';
 import { UserProfile, ProfileType, ChildExtendedProfile } from './types'; 
 import Auth from './Auth';
 import Dashboard from './components/Dashboard';
