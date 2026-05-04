@@ -24,6 +24,7 @@ interface ProfessionalViewProps {
     activeSubTab: 'overview' | 'session' | 'goals' | 'analysis' | 'guidelines';
     selectedPatientId?: string | null;
     onSelectPatient?: (id: string | null) => void;
+    setCurrentView?: (view: any) => void;
 }
 
 interface PatientOption {
@@ -86,7 +87,7 @@ const formatCPF = (value: string) => {
         .replace(/(-\d{2})\d+?$/, '$1');
 };
 
-const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, activeSubTab, selectedPatientId, onSelectPatient }) => {
+const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, activeSubTab, selectedPatientId, onSelectPatient, setCurrentView }) => {
     
     // --- ESTADOS DE DADOS DO PACIENTE ---
     const [childName, setChildName] = useState<string>('Carregando...');
@@ -749,8 +750,7 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
             )}
 
             {activeSubTab === 'overview' && (
-                <div className="grid grid-cols-1 gap-6">
-                    <Card title="📝 Últimos Registros de Sessão" className="h-full">
+                    <Card title="🩺 Últimos Registros de Sessão" className="h-full">
                         {recentSessions.length === 0 ? <p className="text-slate-400 text-sm text-center py-8">Nenhuma sessão visível (Seus registros ou compartilhados).</p> : (
                             <div className="space-y-3">
                                 {recentSessions.map(session => (
@@ -765,6 +765,23 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
                                 ))}
                             </div>
                         )}
+                    </Card>
+
+                    <Card title="💡 Diretrizes de Manejo" className="h-full border-l-4 border-l-orange-400">
+                        <div className="space-y-4">
+                            <p className="text-sm text-slate-600">
+                                {guidelines.length === 0 
+                                    ? "Nenhuma diretriz criada para este paciente. Crie cartões de resposta rápida para orientar pais e escola."
+                                    : `${guidelines.length} diretriz(es) ativa(s) para este paciente.`}
+                            </p>
+                            <Button 
+                                onClick={() => setCurrentView ? (setCurrentView as any)('prof_guidelines') : null}
+                                variant="ghost" 
+                                className="w-full justify-between text-orange-600 hover:bg-orange-50 border border-orange-100"
+                            >
+                                Gerenciar Diretrizes <ChevronRight className="w-4 h-4"/>
+                            </Button>
+                        </div>
                     </Card>
                 </div>
             )}

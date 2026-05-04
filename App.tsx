@@ -193,13 +193,13 @@ const AppContent: React.FC = () => {
     const renderView = () => {
         if (userProfile?.profileType === ProfileType.PROFESSIONAL) {
             switch (currentView) {
-                case 'prof_overview': return <ProfessionalView userProfile={userProfile} activeSubTab="overview" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} />;
-                case 'prof_session': return <ProfessionalView userProfile={userProfile} activeSubTab="session" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} />;
-                case 'prof_goals': return <ProfessionalView userProfile={userProfile} activeSubTab="goals" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} />;
-                case 'prof_analysis': return <ProfessionalView userProfile={userProfile} activeSubTab="analysis" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} />;
-                case 'prof_guidelines': return <ProfessionalView userProfile={userProfile} activeSubTab="guidelines" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} />;
+                case 'prof_overview': return <ProfessionalView userProfile={userProfile} activeSubTab="overview" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} setCurrentView={setCurrentView} />;
+                case 'prof_session': return <ProfessionalView userProfile={userProfile} activeSubTab="session" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} setCurrentView={setCurrentView} />;
+                case 'prof_goals': return <ProfessionalView userProfile={userProfile} activeSubTab="goals" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} setCurrentView={setCurrentView} />;
+                case 'prof_analysis': return <ProfessionalView userProfile={userProfile} activeSubTab="analysis" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} setCurrentView={setCurrentView} />;
+                case 'prof_guidelines': return <ProfessionalView userProfile={userProfile} activeSubTab="guidelines" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} setCurrentView={setCurrentView} />;
                 case 'docs': return <DocsView userProfile={userProfile} preSelectedStudentId={selectedChildId} />; 
-                default: return <ProfessionalView userProfile={userProfile} activeSubTab="overview" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} />;
+                default: return <ProfessionalView userProfile={userProfile} activeSubTab="overview" selectedPatientId={selectedChildId} onSelectPatient={setSelectedChildId} setCurrentView={setCurrentView} />;
             }
         }
         if (userProfile?.profileType === ProfileType.SCHOOL) {
@@ -228,7 +228,7 @@ const AppContent: React.FC = () => {
             { id: 'prof_overview', label: 'Início', icon: LayoutDashboard, show: true }, 
             { id: 'prof_session', label: 'Sessão', icon: ClipboardList, show: true, special: true }, 
             { id: 'prof_goals', label: 'Metas', icon: Target, show: true }, 
-            { id: 'prof_guidelines', label: 'Diretrizes', icon: BookHeart, show: true },
+            { id: 'prof_guidelines', label: 'Diretrizes', icon: BookOpen, show: true },
             { id: 'prof_analysis', label: 'Dados', icon: Activity, show: true }, 
             { id: 'docs', label: 'Docs', icon: FileText, show: true } 
         ];
