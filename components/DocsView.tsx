@@ -324,8 +324,8 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
     // DEFINIÇÃO DE PERMISSÕES
     // Responsável (Pai/Mãe)
     const isGuardian = (isParent && targetUid !== userProfile?.uid) || isIndependentAdult;
-    // Permissão para ENTRAR no modo de edição (Pai ou Profissional)
-    const canEnterEditMode = isGuardian || isHealth;
+    // Permissão para ENTRAR no modo de edição (Apenas Responsável)
+    const canEnterEditMode = isGuardian;
     
     const canUpload = !isChild; // Criança não pode fazer upload
 
