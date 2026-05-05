@@ -302,6 +302,7 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [studentName, setStudentName] = useState<string>('Aluno');
+    const [patientName, setPatientName] = useState<string>('Paciente');
 
     const isChild = userProfile?.profileType === ProfileType.CHILD;
     const isParent = userProfile?.profileType === ProfileType.ADULT;
@@ -358,14 +359,16 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
     }, [targetUid]);
 
     useEffect(() => {
-        if (targetUid && isSchool) {
+        if (targetUid) {
             db.collection('users').doc(targetUid).get().then(doc => {
                 if (doc.exists) {
-                    setStudentName(doc.data()?.displayName || 'Aluno');
+                    const data = doc.data();
+                    if (isSchool) setStudentName(data?.displayName || 'Aluno');
+                    if (isHealth) setPatientName(data?.displayName || 'Paciente');
                 }
             });
         }
-    }, [targetUid, isSchool]);
+    }, [targetUid, isSchool, isHealth]);
 
     const handleLogout = () => {
         if (window.confirm("Deseja sair da conta?")) {
@@ -511,6 +514,34 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
                             title="Sair"
                         >
                             <LogOut className="w-5 h-5"/>
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Header Padronizado para Saúde (TEAL) */}
+            {isHealth && preSelectedStudentId && (
+                <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-6 flex items-center justify-between shadow-sm relative overflow-hidden">
+                    <div className="flex items-center gap-3 relative z-10">
+                        <div className="bg-teal-100 p-2 rounded-full shadow-sm border border-teal-200">
+                            <Users className="w-6 h-6 text-teal-700" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-teal-600 uppercase tracking-wider mb-0.5">Paciente</p>
+                            <h2 className="text-lg font-black text-teal-900 leading-tight">{patientName}</h2>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="hidden md:block text-right border-r border-teal-200 pr-4">
+                            <p className="text-[10px] text-teal-600 font-bold uppercase tracking-widest">Módulo Terapêutico</p>
+                            <p className="text-[10px] text-teal-500 font-medium">{new Date().toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <button 
+                            onClick={handleLogout} 
+                            className="text-teal-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-all" 
+                            title="Sair da Conta"
+                        >
+                            <LogOut className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
