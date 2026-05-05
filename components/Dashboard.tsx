@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { User } from 'firebase/auth';
-import { LogOut, Wind, Sparkles, CheckCircle, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react'; 
+import { LogOut, Wind, Sparkles, CheckCircle, Calendar, AlertTriangle, CheckCircle2, Star, Trophy } from 'lucide-react'; 
 
 // Importações dos componentes
 import WelcomeCard from './WelcomeCard';
@@ -39,7 +39,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
         upcomingTherapies, 
         lastDiaryEntry,
         therapeuticGuidelines,
-        adaptationEvents
+        adaptationEvents,
+        pedagogicalAchievements
     } = useDashboardData(userProfile);
 
     const { isInstallable, isStandalone, installPWA } = usePWAInstall();
@@ -251,6 +252,48 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
                 {/* Último Registro do Diário */}
                 <LastDiaryCard lastEntry={lastDiaryEntry} />
             </div>
+            {/* 4. LINHA DO TEMPO DE VITÓRIAS (Marcos Pedagógicos) */}
+            {pedagogicalAchievements.length > 0 && (
+                <div className="mt-8 mb-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Trophy className="w-6 h-6 text-amber-500" />
+                            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Linha do Tempo de Vitórias</h3>
+                        </div>
+                        <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-1 rounded-full uppercase">PDI Dinâmico</span>
+                    </div>
+
+                    <div className="relative border-l-2 border-amber-100 ml-3 space-y-6">
+                        {pedagogicalAchievements.sort((a, b) => {
+                            const dateA = new Date(a.date).getTime();
+                            const dateB = new Date(b.date).getTime();
+                            return dateB - dateA;
+                        }).map((achievement, idx) => (
+                            <div key={achievement.id} className="relative pl-8 animate-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
+                                {/* Ponto na linha */}
+                                <div className="absolute left-[-9px] top-1 w-4 h-4 rounded-full bg-white border-2 border-amber-400 flex items-center justify-center">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+                                </div>
+                                
+                                <div className="bg-white p-4 rounded-2xl border-2 border-amber-50 shadow-sm hover:border-amber-100 transition-all">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded uppercase">
+                                            {new Date(achievement.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
+                                        </span>
+                                        <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                                    </div>
+                                    <p className="text-sm text-slate-700 font-bold leading-relaxed">
+                                        {achievement.achievementDescription}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 mt-2 italic flex items-center gap-1">
+                                        Registrado por Escola
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* VERSÃO NO RODAPÉ DO DASHBOARD */}
             <p className="text-[10px] text-slate-400 mt-8 mb-4 font-bold tracking-wider text-center uppercase">

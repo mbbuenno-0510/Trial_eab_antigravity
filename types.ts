@@ -376,6 +376,8 @@ export interface SchoolLog {
   dysregulationDetails?: string; 
   successfulStrategies?: string; 
   generalNotes?: string;
+  isAchievement?: boolean; // Novo: Marca se o registro contém uma conquista pedagógica
+  achievementDescription?: string; // Novo: Detalhes da conquista
 }
 
 export interface SchoolMedicationLog {

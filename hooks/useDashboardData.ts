@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'; 
-import { UserProfile, Appointment, MoodEntry, Therapy, TherapeuticGuideline, AdaptationEvent } from '../types'; 
+import { UserProfile, Appointment, MoodEntry, Therapy, TherapeuticGuideline, AdaptationEvent, SchoolLog } from '../types'; 
 import { db } from '../services/firebase'; 
 import { decryptData } from '../services/security';
 
@@ -13,6 +13,7 @@ interface DashboardData {
     lastDiaryEntry: MoodEntry | null;
     therapeuticGuidelines: TherapeuticGuideline[];
     adaptationEvents: AdaptationEvent[];
+    pedagogicalAchievements: SchoolLog[];
     loading: boolean;
 }
 
@@ -118,6 +119,7 @@ export const useDashboardData = (userProfile: UserProfile | null): DashboardData
         lastDiaryEntry: null,
         therapeuticGuidelines: [],
         adaptationEvents: [],
+        pedagogicalAchievements: [],
         loading: true,
     });
     
@@ -241,6 +243,13 @@ export const useDashboardData = (userProfile: UserProfile | null): DashboardData
         unsubscribes.push(adaptationEventsRef.onSnapshot((snapshot) => {
             const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AdaptationEvent));
             setData(prev => ({ ...prev, adaptationEvents: events }));
+        }));
+
+        // PEDAGOGICAL ACHIEVEMENTS (from school_logs)
+        const schoolLogsRef = db.collection('users').doc(uid).collection('school_logs');
+        unsubscribes.push(schoolLogsRef.where('isAchievement', '==', true).onSnapshot((snapshot) => {
+            const achievements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SchoolLog));
+            setData(prev => ({ ...prev, pedagogicalAchievements: achievements }));
         }));
 
         return () => unsubscribes.forEach(unsub => unsub());

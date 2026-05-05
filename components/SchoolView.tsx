@@ -78,6 +78,8 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
     const [dysregulationDetails, setDysregulationDetails] = useState('');
     const [successfulStrategies, setSuccessfulStrategies] = useState('');
     const [generalNotes, setGeneralNotes] = useState('');
+    const [isAchievement, setIsAchievement] = useState(false);
+    const [achievementDescription, setAchievementDescription] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     // --- STATES PARA EDIÇÃO E EXCLUSÃO ---
@@ -91,6 +93,8 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
     const [editDysregulationDetails, setEditDysregulationDetails] = useState('');
     const [editStrategies, setEditStrategies] = useState('');
     const [editNotes, setEditNotes] = useState('');
+    const [editIsAchievement, setEditIsAchievement] = useState(false);
+    const [editAchievementDescription, setEditAchievementDescription] = useState('');
     const [isUpdating, setIsUpdating] = useState(false);
 
     // Estado para Exclusão
@@ -508,7 +512,9 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                 dysregulationCount,
                 dysregulationDetails,
                 successfulStrategies,
-                generalNotes
+                generalNotes,
+                isAchievement,
+                achievementDescription: isAchievement ? achievementDescription : ''
             };
 
             await db.collection('users').doc(targetUid).collection('school_logs').add(newLog);
@@ -518,6 +524,8 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
             setDysregulationDetails('');
             setSuccessfulStrategies('');
             setGeneralNotes('');
+            setIsAchievement(false);
+            setAchievementDescription('');
             
         } catch (error) {
             console.error("Erro ao salvar:", error);
@@ -537,6 +545,8 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
         setEditDysregulationDetails(log.dysregulationDetails || '');
         setEditStrategies(log.successfulStrategies || '');
         setEditNotes(log.generalNotes || '');
+        setEditIsAchievement(!!log.isAchievement);
+        setEditAchievementDescription(log.achievementDescription || '');
         setIsEditModalOpen(true);
     };
 
@@ -551,6 +561,8 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                 dysregulationDetails: editDysregulationDetails,
                 successfulStrategies: editStrategies,
                 generalNotes: editNotes,
+                isAchievement: editIsAchievement,
+                achievementDescription: editIsAchievement ? editAchievementDescription : ''
             });
             setIsEditModalOpen(false);
             setEditingLog(null);
@@ -746,6 +758,16 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                 {log.generalNotes && (
                     <div className="bg-slate-50 p-2 rounded text-xs text-slate-700 mt-1 border border-slate-200">
                         <strong>📝 Observações:</strong> {log.generalNotes}
+                    </div>
+                )}
+
+                {log.isAchievement && log.achievementDescription && (
+                    <div className="bg-amber-50 p-2 rounded text-xs text-amber-800 mt-2 border-2 border-amber-200 shadow-sm relative overflow-hidden">
+                        <div className="absolute right-0 top-0 p-1 opacity-20">
+                            <Star className="w-8 h-8 fill-amber-400 text-amber-400" />
+                        </div>
+                        <strong className="flex items-center gap-1">⭐ Conquista Pedagógica:</strong> 
+                        <p className="mt-1 font-medium">{log.achievementDescription}</p>
                     </div>
                 )}
             </div>
@@ -1195,6 +1217,36 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                                 onChange={e => setGeneralNotes(e.target.value)}
                             />
 
+                            {/* Seção de Conquista Pedagógica */}
+                            <div className={`p-4 rounded-2xl border-2 transition-all ${isAchievement ? 'bg-amber-50 border-amber-200 shadow-inner' : 'bg-slate-50 border-slate-100'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div 
+                                            onClick={() => setIsAchievement(!isAchievement)}
+                                            className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isAchievement ? 'bg-amber-500 border-amber-500 text-white' : 'bg-white border-slate-300 group-hover:border-amber-400'}`}
+                                        >
+                                            {isAchievement && <Star className="w-4 h-4 fill-white" />}
+                                        </div>
+                                        <span className={`text-sm font-bold transition-colors ${isAchievement ? 'text-amber-800' : 'text-slate-600'}`}>Marcar como Conquista Pedagógica</span>
+                                    </label>
+                                    <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Novo: PDI Dinâmico</div>
+                                </div>
+                                
+                                {isAchievement && (
+                                    <div className="animate-in zoom-in-95 duration-200">
+                                        <TextArea 
+                                            placeholder="Descreva a vitória de hoje... (Ex: Realizou atividade sem ajuda, interagiu com colega)"
+                                            value={achievementDescription}
+                                            onChange={e => setAchievementDescription(e.target.value)}
+                                            className="bg-white border-amber-200 focus:border-amber-500"
+                                        />
+                                        <p className="text-[10px] text-amber-700 mt-1 italic">
+                                            Isso gera uma "Linha do Tempo de Vitórias" para os pais e terapeutas.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
                             <Button 
                                 onClick={handleSaveLog} 
                                 disabled={isSaving}
@@ -1531,6 +1583,28 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                         value={editNotes}
                         onChange={e => setEditNotes(e.target.value)}
                     />
+
+                    <div className={`p-3 rounded-xl border transition-all ${editIsAchievement ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                        <label className="flex items-center gap-2 cursor-pointer mb-2">
+                            <input 
+                                type="checkbox" 
+                                checked={editIsAchievement} 
+                                onChange={e => setEditIsAchievement(e.target.checked)}
+                                className="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                            />
+                            <span className="text-sm font-bold text-amber-800 flex items-center gap-1">
+                                <Star className={`w-4 h-4 ${editIsAchievement ? 'fill-amber-400' : ''}`} /> Conquista Pedagógica
+                            </span>
+                        </label>
+                        {editIsAchievement && (
+                            <TextArea 
+                                placeholder="Descreva a conquista..."
+                                value={editAchievementDescription}
+                                onChange={e => setEditAchievementDescription(e.target.value)}
+                                className="bg-white border-amber-200"
+                            />
+                        )}
+                    </div>
 
                     <Button onClick={handleUpdateLog} disabled={isUpdating} className="w-full bg-purple-600 hover:bg-purple-700">
                         {isUpdating ? 'Salvando...' : 'Atualizar Registro'}
