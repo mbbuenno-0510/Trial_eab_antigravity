@@ -21,6 +21,7 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onBack, onRegister }) => {
     const [scale, setScale] = useState(1);
+    const [activeDoc, setActiveDoc] = useState<'DOSSIER' | 'SCREENS'>('DOSSIER');
 
     useEffect(() => {
         const handleResize = () => {
@@ -180,28 +181,52 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onRegister }) => {
                 .screen-preview-styles .screen-content { padding: 15px; background: #F8FAFC; height: 100%; display: flex; flex-direction: column; }
                 .screen-preview-styles .nav-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: white; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-around; align-items: center; }
                 
+                /* Preview visibility classes */
+                .doc-visible { display: block !important; position: relative !important; left: 0 !important; }
+                .doc-hidden { display: none !important; }
+                
                 .pdf-hidden-source { position: absolute; left: -99999px; top: 0; width: 794px; pointer-events: none; background: white; }
             `}</style>
 
             {/* BARRA DE COMANDO SUPERIOR - AGORA STICKY E MOBILE-FRIENDLY */}
-            <div className="bg-slate-900/95 backdrop-blur-md text-white p-3 md:p-4 z-[250] flex flex-col sm:flex-row justify-between items-center shadow-2xl border-b border-slate-800 shrink-0 sticky top-0 gap-3 sm:gap-0">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="bg-slate-900/95 backdrop-blur-md text-white p-3 md:p-4 z-[250] flex flex-col lg:flex-row justify-between items-center shadow-2xl border-b border-slate-800 shrink-0 sticky top-0 gap-3">
+                <div className="flex items-center gap-3 w-full lg:w-auto">
+                    <button onClick={onBack} className="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl transition-all mr-2">
+                        <ArrowLeft className="w-5 h-5 text-white" />
+                    </button>
                     <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-xl flex items-center justify-center text-lg shadow-inner shrink-0">🤖</div>
                     <div className="leading-tight overflow-hidden">
                         <span className="font-black text-sm md:text-lg block uppercase tracking-tighter text-blue-400 truncate">EAB MASTER 2026</span>
-                        <span className="text-[8px] md:text-[10px] text-slate-500 uppercase tracking-widest font-bold italic truncate block">Dossier de Inteligência e Cuidado</span>
+                        <span className="text-[8px] md:text-[10px] text-slate-500 uppercase tracking-widest font-bold italic truncate block">Apresentação do Projeto</span>
                     </div>
                 </div>
-                <div className="flex flex-wrap justify-center sm:justify-end gap-2 md:gap-3 w-full sm:w-auto">
-                    <button id="btn-download" onClick={handleDownloadPDF} className="bg-blue-600 hover:bg-blue-500 px-3 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl font-black text-[9px] md:text-xs flex items-center gap-2 transition-all shadow-lg active:scale-95 border border-blue-400">
-                        <Download className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden xs:inline">BAIXAR</span> DOSSIER
+
+                {/* Alternador de Documentos */}
+                <div className="flex bg-slate-800 p-1.5 rounded-2xl border border-slate-700 w-full lg:w-auto justify-center">
+                    <button 
+                        onClick={() => setActiveDoc('DOSSIER')}
+                        className={`px-4 md:px-6 py-2 rounded-xl font-black text-[10px] md:text-xs transition-all flex items-center gap-2 ${activeDoc === 'DOSSIER' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        <FileText className="w-3 h-3 md:w-4 md:h-4" /> DOSSIER
                     </button>
-                    <button id="btn-download-screens" onClick={handleDownloadScreenshots} className="bg-indigo-600 hover:bg-indigo-500 px-3 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl font-black text-[9px] md:text-xs flex items-center gap-2 transition-all shadow-lg active:scale-95 border border-indigo-400">
-                        <Monitor className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden xs:inline">DESIGN</span> TELAS
+                    <button 
+                        onClick={() => setActiveDoc('SCREENS')}
+                        className={`px-4 md:px-6 py-2 rounded-xl font-black text-[10px] md:text-xs transition-all flex items-center gap-2 ${activeDoc === 'SCREENS' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        <Monitor className="w-3 h-3 md:w-4 md:h-4" /> TELAS
                     </button>
-                    <button onClick={onBack} className="bg-rose-600 hover:bg-rose-500 px-3 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl font-black text-[9px] md:text-xs flex items-center gap-2 transition-all border border-rose-400 shadow-lg">
-                        <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" /> VOLTAR
-                    </button>
+                </div>
+
+                <div className="flex justify-center lg:justify-end gap-2 md:gap-3 w-full lg:w-auto">
+                    {activeDoc === 'DOSSIER' ? (
+                        <button id="btn-download" onClick={handleDownloadPDF} className="flex-1 lg:flex-none bg-blue-600 hover:bg-blue-500 px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl font-black text-[9px] md:text-xs flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 border border-blue-400">
+                            <Download className="w-3 h-3 md:w-4 md:h-4" /> BAIXAR PDF
+                        </button>
+                    ) : (
+                        <button id="btn-download-screens" onClick={handleDownloadScreenshots} className="flex-1 lg:flex-none bg-indigo-600 hover:bg-indigo-500 px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl font-black text-[9px] md:text-xs flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 border border-indigo-400">
+                            <Download className="w-3 h-3 md:w-4 md:h-4" /> BAIXAR PDF
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -217,7 +242,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onRegister }) => {
                         marginBottom: `-${VISUAL_CONTENT_HEIGHT * (1 - scale)}px` 
                     }}
                 >
-                    <div id="print-container" className="pdf-common-styles">
+                    <div id="print-container" className={`pdf-common-styles ${activeDoc === 'DOSSIER' ? 'doc-visible' : 'doc-hidden'}`}>
                         {/* PÁGINA 1: COVER E MANIFESTO */}
                         <div className="a4-page">
                             <div className="absolute top-0 right-0 opacity-10"><svg width="600" height="600" viewBox="0 0 500 500"><circle cx="500" cy="0" r="500" fill="#3B82F6" /></svg></div>
@@ -588,7 +613,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onBack, onRegister }) => {
                     </div>
 
                     {/* SEGUNDO DOCUMENTO: APRESENTAÇÃO DE TELAS */}
-                    <div id="print-screens-container" className="pdf-hidden-source pdf-common-styles screen-preview-styles">
+                    <div id="print-screens-container" className={`pdf-common-styles screen-preview-styles ${activeDoc === 'SCREENS' ? 'doc-visible' : 'pdf-hidden-source doc-hidden'}`}>
                         {/* PÁGINA 1: CAPA DA APRESENTAÇÃO */}
                         <div className="a4-page">
                             <div className="absolute top-0 left-0 w-full h-full bg-slate-900 overflow-hidden">
