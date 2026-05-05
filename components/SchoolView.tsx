@@ -4,7 +4,7 @@ import { db, auth } from '../services/firebase';
 import firebase from 'firebase/compat/app';
 import { 
     GraduationCap, Users, BookOpen, AlertOctagon, Lightbulb, 
-    Save, Calendar, LogOut, ChevronDown, Loader2, ExternalLink, Hash, Search, ArrowRight, Plus, Trash2, Edit2, Pill, FileText, CheckCircle, Clock, Activity, AlertTriangle
+    Save, Calendar, LogOut, ChevronDown, Loader2, ExternalLink, Hash, Search, ArrowRight, Plus, Trash2, Edit2, Pill, FileText, CheckCircle, Clock, Activity, AlertTriangle, Star
 } from 'lucide-react';
 import { Card, Button, Input, TextArea, Modal, Select } from './ui';
 import DocumentViewModal from './DocumentViewModal'; // Import para visualizar receitas
