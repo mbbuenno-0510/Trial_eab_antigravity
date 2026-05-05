@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { UserProfile, StoredDocument, ProfileType, ChildExtendedProfile, HealthAccessRule, SchoolAccessRule } from '../types';
 import { db, storage } from '../services/firebase';
-import { FileText, Trash2, Eye, UploadCloud, User, Loader2, Save, Plus, ShieldCheck, GraduationCap, X, Edit2, Ban, AlertTriangle, FolderOpen, ArrowLeft, Users, ChevronDown, BellRing, Baby, Wind, Music, BookOpen, Gamepad2, Settings2, Sparkles, Palette, Dog, PenTool, BrainCircuit, MessageCircle, BookOpenCheck, Network, RefreshCw, Stethoscope, Briefcase } from 'lucide-react';
+import { FileText, Trash2, Eye, UploadCloud, User, Loader2, Save, Plus, ShieldCheck, GraduationCap, X, Edit2, Ban, AlertTriangle, FolderOpen, ArrowLeft, Users, ChevronDown, BellRing, Baby, Wind, Music, BookOpen, Gamepad2, Settings2, Sparkles, Palette, Dog, PenTool, BrainCircuit, MessageCircle, BookOpenCheck, Network, RefreshCw, Stethoscope, Briefcase, LogOut } from 'lucide-react';
 import { Card, Button, Input, TextArea, Modal } from './ui';
 import UploadModal from './UploadModal';
 import DocumentViewModal from './DocumentViewModal';
@@ -301,6 +301,7 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
     const [childProfile, setChildProfile] = useState<Partial<ChildExtendedProfile>>({});
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [studentName, setStudentName] = useState<string>('Aluno');
 
     const isChild = userProfile?.profileType === ProfileType.CHILD;
     const isParent = userProfile?.profileType === ProfileType.ADULT;
@@ -355,6 +356,22 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
         });
         return () => unsubDocs();
     }, [targetUid]);
+
+    useEffect(() => {
+        if (targetUid && isSchool) {
+            db.collection('users').doc(targetUid).get().then(doc => {
+                if (doc.exists) {
+                    setStudentName(doc.data()?.displayName || 'Aluno');
+                }
+            });
+        }
+    }, [targetUid, isSchool]);
+
+    const handleLogout = () => {
+        if (window.confirm("Deseja sair da conta?")) {
+            auth.signOut();
+        }
+    };
 
     const filteredDocuments = useMemo(() => {
         let baseDocs = documents;
@@ -474,6 +491,31 @@ const DocsView: React.FC<DocsViewProps> = ({ userProfile, preSelectedStudentId }
 
     return (
         <div className="p-4 max-w-4xl mx-auto pb-24 font-sans animate-in fade-in">
+            {/* Header Padronizado para Escola */}
+            {isSchool && preSelectedStudentId && (
+                <div className="bg-purple-50 border-2 border-purple-200 rounded-2xl p-5 mb-6 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100 rounded-full blur-2xl opacity-50 -mr-10 -mt-10 pointer-events-none"></div>
+                    <div className="flex justify-between items-start relative z-10">
+                        <div className="flex gap-4 items-start">
+                            <div className="bg-purple-600 p-3 rounded-2xl shadow-lg shrink-0">
+                                <GraduationCap className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-0.5">Aluno(a)</p>
+                                <h2 className="text-xl font-black text-slate-800 leading-tight">{studentName}</h2>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={handleLogout}
+                            className="text-purple-400 hover:text-purple-600 transition-colors p-2"
+                            title="Sair"
+                        >
+                            <LogOut className="w-5 h-5"/>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {errorMessage && (
                 <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-center justify-between">
                     <div className="flex items-center gap-2"><AlertTriangle className="w-5 h-5" /><span className="text-sm font-medium">{errorMessage}</span></div>
