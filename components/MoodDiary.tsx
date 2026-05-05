@@ -476,7 +476,7 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
         if (GEMINI_KEY) {
             const userRole = isChildProfile ? 'uma criança' : 'um adulto'; 
             const prompt = `Aja como um psicólogo empático para ${userRole}. O usuário está sentindo: ${EMOTION_DETAILS[mood].label}. Período: ${period}. Notas: "${notes}". Responda com um insight curto, positivo e acolhedor (máximo 2 frases).`;
-            const result = await ai.models.generateContent({ model: 'gemini-1.5-flash', contents: [{ role: "user", parts: [{ text: prompt }] }] });
+            const result = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: [{ role: "user", parts: [{ text: prompt }] }] });
             if (result.text) aiFeedback = result.text.trim();
         }
         // Criptografar notas e feedback antes de salvar
