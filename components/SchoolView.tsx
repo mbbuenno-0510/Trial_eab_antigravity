@@ -113,7 +113,6 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
 
     // Estados para Visualização de Documento (Receita)
     const [isDocumentViewModalOpen, setDocumentViewModalOpen] = useState(false);
-    const [documentToView, setDocumentToView] = setDocumentToView = useState<StoredDocument | null>(null);
     const [documentToView, setDocumentToView] = useState<StoredDocument | null>(null);
 
     // --- NOVO: ESTADOS PARA CALENDÁRIO DE ADAPTAÇÃO ---
@@ -1323,6 +1322,8 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                             </Button>
                         </div>
                     </Modal>
+                </div>
+            )}
 
 
             {/* --- HISTÓRICO COMPLETO --- */}
