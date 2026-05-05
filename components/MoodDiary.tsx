@@ -384,14 +384,14 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
       }
   }, [activeTab, targetUid]);
 
-  // Speech Recognition Setup (Same as before)
+  // Speech Recognition Setup
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
       recognition.continuous = false; recognition.interimResults = false; recognition.lang = 'pt-BR';
       recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => { setTimeout(() => { if (isListening) setIsListening(false); }, 100); };
+      recognition.onend = () => setIsListening(false);
       recognition.onerror = (event: any) => { console.error("Speech Recognition Error:", event.error); setIsListening(false); };
       recognition.onresult = (event: any) => {
         let transcript = '';
@@ -401,7 +401,7 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
       recognitionRef.current = recognition;
     }
     return () => { if (recognitionRef.current) recognitionRef.current.stop(); };
-  }, [isListening]); 
+  }, []); 
 
   useEffect(() => { 
     return () => { 
