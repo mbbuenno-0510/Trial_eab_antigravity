@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { db, auth, handleFirestoreError, OperationType } from './services/firebase';
 import firebase from 'firebase/compat/app'; // Import for types
-import { LayoutDashboard, BookHeart, BookOpen, HeartPulse, ListTodo, FileText, Loader2, Wind, LogOut, ClipboardList, Target, Activity, School as SchoolIcon, History, X, Bell, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, BookHeart, BookOpen, HeartPulse, ListTodo, FileText, Loader2, Wind, LogOut, ClipboardList, Target, Activity, School as SchoolIcon, History, X, Bell, AlertTriangle, Calendar } from 'lucide-react';
 import { UserProfile, ProfileType, ChildExtendedProfile } from './types'; 
 import Auth from './Auth';
 import Dashboard from './components/Dashboard';
@@ -20,7 +20,7 @@ import PWAInstallHint from './components/PWAInstallHint';
 type ViewState = 
     'dashboard' | 'diary' | 'health' | 'routines' | 'docs' | 'sensory' | 
     'prof_overview' | 'prof_session' | 'prof_goals' | 'prof_analysis' | 'prof_guidelines' |
-    'school_home' | 'school_log' | 'school_history';
+    'school_home' | 'school_log' | 'school_calendar' | 'school_history';
 
 const NotificationPopup = ({ message, onClose, visible }: { message: string, onClose: () => void, visible: boolean }) => {
     if (!visible) return null;
