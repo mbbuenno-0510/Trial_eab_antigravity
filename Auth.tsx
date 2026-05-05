@@ -479,13 +479,19 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
               mood={MoodType.HAPPY} 
               isInstallable={isInstallable && !isStandalone}
               onInstallClick={async () => {
-                if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                const ua = navigator.userAgent;
+                const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+                const isAndroid = /Android/i.test(ua);
+                
+                if (isIOS) {
                   if (onShowPWAHint) onShowPWAHint('ios');
+                } else if (isAndroid) {
+                  // Tenta o prompt nativo primeiro se existir, senão mostra o guia
+                  const fallbackPlatform = await installPWA();
+                  if (fallbackPlatform && onShowPWAHint) onShowPWAHint('android');
                 } else {
                   const fallbackPlatform = await installPWA();
-                  if (fallbackPlatform && onShowPWAHint) {
-                    onShowPWAHint(fallbackPlatform as 'android' | 'windows');
-                  }
+                  if (fallbackPlatform && onShowPWAHint) onShowPWAHint(fallbackPlatform as 'windows');
                 }
               }}
             />
