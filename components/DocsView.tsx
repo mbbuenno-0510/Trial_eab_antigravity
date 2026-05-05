@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { UserProfile, StoredDocument, ProfileType, ChildExtendedProfile, HealthAccessRule, SchoolAccessRule } from '../types';
-import { db, storage } from '../services/firebase';
+import { db, storage, auth } from '../services/firebase';
 import { FileText, Trash2, Eye, UploadCloud, User, Loader2, Save, Plus, ShieldCheck, GraduationCap, X, Edit2, Ban, AlertTriangle, FolderOpen, ArrowLeft, Users, ChevronDown, BellRing, Baby, Wind, Music, BookOpen, Gamepad2, Settings2, Sparkles, Palette, Dog, PenTool, BrainCircuit, MessageCircle, BookOpenCheck, Network, RefreshCw, Stethoscope, Briefcase, LogOut } from 'lucide-react';
 import { Card, Button, Input, TextArea, Modal } from './ui';
 import UploadModal from './UploadModal';
