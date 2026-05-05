@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { UserProfile, SchoolLog, ChildExtendedProfile, Medication, StoredDocument, SchoolMedicationLog, TherapeuticGuideline } from '../types';
+import { UserProfile, SchoolLog, ChildExtendedProfile, Medication, StoredDocument, SchoolMedicationLog, TherapeuticGuideline, AdaptationEvent, AdaptationEventType } from '../types';
 import { db, auth } from '../services/firebase';
 import firebase from 'firebase/compat/app';
 import { 
@@ -12,7 +12,7 @@ import { GuidelineCard } from './GuidelineCard';
 
 interface SchoolViewProps {
     userProfile: UserProfile;
-    activeSubTab: 'home' | 'log' | 'history';
+    activeSubTab: 'home' | 'log' | 'history' | 'calendar';
     selectedStudentId?: string | null; // 🆕 Prop de controle
     onSelectStudent?: (id: string | null) => void; // 🆕 Callback atualizado para aceitar null
     onChangeView?: (view: string) => void; // 🆕 Para navegar para Docs
@@ -113,7 +113,19 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
 
     // Estados para Visualização de Documento (Receita)
     const [isDocumentViewModalOpen, setDocumentViewModalOpen] = useState(false);
+    const [documentToView, setDocumentToView] = setDocumentToView = useState<StoredDocument | null>(null);
     const [documentToView, setDocumentToView] = useState<StoredDocument | null>(null);
+
+    // --- NOVO: ESTADOS PARA CALENDÁRIO DE ADAPTAÇÃO ---
+    const [adaptationEvents, setAdaptationEvents] = useState<AdaptationEvent[]>([]);
+    const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+    const [isSavingEvent, setIsSavingEvent] = useState(false);
+    const [eventForm, setEventForm] = useState<Partial<AdaptationEvent>>({
+        type: 'Evento',
+        date: getLocalTodayString(),
+        title: '',
+        description: ''
+    });
 
     // FUNÇÃO DE LOGOUT (Limpa Buffer)
     const handleLogout = () => {
@@ -438,10 +450,18 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                 setTherapeuticGuidelines(guidelines.filter(g => g.targetAudience === 'School' || g.targetAudience === 'Both'));
             });
 
+        // Fetch Adaptation Events
+        const unsubEvents = db.collection('users').doc(targetUid).collection('adaptation_events')
+            .orderBy('date', 'asc')
+            .onSnapshot(snap => {
+                setAdaptationEvents(snap.docs.map(d => ({ id: d.id, ...d.data() } as AdaptationEvent)));
+            });
+
         return () => {
             unsubLogs();
             unsubMedLogs();
             unsubGuidelines();
+            unsubEvents();
         };
     }, [targetUid, availableStudents]);
 
@@ -597,6 +617,43 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
             alert("Erro ao salvar cadastro.");
         } finally {
             setIsSavingRa(false);
+        }
+    };
+
+    const handleSaveEvent = async () => {
+        if (!targetUid || !eventForm.title || !eventForm.date) return;
+        setIsSavingEvent(true);
+        try {
+            const newEvent = {
+                ...eventForm,
+                userId: targetUid,
+                schoolId: userProfile.uid,
+                createdAt: Date.now()
+            };
+
+            if (eventForm.id) {
+                await db.collection('users').doc(targetUid).collection('adaptation_events').doc(eventForm.id).update(newEvent);
+            } else {
+                await db.collection('users').doc(targetUid).collection('adaptation_events').add(newEvent);
+                // Simulação de alerta (Poderia ser um push real se tivéssemos backend)
+                alert("Evento cadastrado! Um alerta foi enviado para os pais e terapeutas prepararem a criança.");
+            }
+            setIsEventModalOpen(false);
+            setEventForm({ type: 'Evento', date: getLocalTodayString(), title: '', description: '' });
+        } catch (error) {
+            console.error("Erro ao salvar evento:", error);
+            alert("Erro ao salvar evento.");
+        } finally {
+            setIsSavingEvent(false);
+        }
+    };
+
+    const handleDeleteEvent = async (eventId: string) => {
+        if (!targetUid || !window.confirm("Deseja excluir este evento?")) return;
+        try {
+            await db.collection('users').doc(targetUid).collection('adaptation_events').doc(eventId).delete();
+        } catch (error) {
+            console.error("Erro ao excluir evento:", error);
         }
     };
 
@@ -1150,6 +1207,123 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                     </Card>
                 </div>
             )}
+
+            {/* --- CALENDÁRIO DE ADAPTAÇÃO (NOVO) --- */}
+            {activeSubTab === 'calendar' && (
+                <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <Calendar className="w-5 h-5 text-purple-600"/> Calendário de Adaptação
+                            </h3>
+                            <p className="text-xs text-slate-500">Registre eventos que quebram a rotina para que a família prepare a criança.</p>
+                        </div>
+                        <Button 
+                            onClick={() => {
+                                setEventForm({ type: 'Evento', date: getLocalTodayString(), title: '', description: '' });
+                                setIsEventModalOpen(true);
+                            }}
+                            className="bg-purple-600 hover:bg-purple-700 text-xs py-2 h-auto"
+                        >
+                            <Plus className="w-4 h-4 mr-1"/> Novo Evento
+                        </Button>
+                    </div>
+
+                    {adaptationEvents.length === 0 ? (
+                        <div className="bg-white p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center">
+                            <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                            <p className="text-slate-500 font-medium">Nenhum evento de adaptação programado.</p>
+                            <p className="text-xs text-slate-400 mt-1">Eventos como passeios ou trocas de professor aparecem aqui.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-4">
+                            {adaptationEvents.map(event => {
+                                const eventDate = new Date(event.date + 'T12:00:00');
+                                const isPast = eventDate < new Date(new Date().setHours(0,0,0,0));
+                                
+                                return (
+                                    <div key={event.id} className={`p-4 rounded-2xl border-2 transition-all ${isPast ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-purple-100 shadow-sm hover:shadow-md'}`}>
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-xl ${isPast ? 'bg-slate-200 text-slate-500' : 'bg-purple-100 text-purple-600'}`}>
+                                                    <Calendar className="w-5 h-5"/>
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                                                            event.type === 'Passeio' ? 'bg-blue-100 text-blue-600' :
+                                                            event.type === 'Simulado' ? 'bg-red-100 text-red-600' :
+                                                            event.type === 'Substituição' ? 'bg-orange-100 text-orange-600' :
+                                                            'bg-purple-100 text-purple-600'
+                                                        }`}>
+                                                            {event.type}
+                                                        </span>
+                                                        <span className="text-xs font-bold text-slate-400">
+                                                            {eventDate.toLocaleDateString('pt-BR')}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="font-bold text-slate-800 mt-0.5">{event.title}</h4>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => { setEventForm(event); setIsEventModalOpen(true); }} className="p-1.5 text-slate-400 hover:text-purple-600 transition-colors"><Edit2 className="w-4 h-4"/></button>
+                                                <button onClick={() => handleDeleteEvent(event.id)} className="p-1.5 text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4"/></button>
+                                            </div>
+                                        </div>
+                                        {event.description && <p className="text-sm text-slate-600 ml-12 italic">"{event.description}"</p>}
+                                        
+                                        <div className="mt-4 flex gap-4 ml-12 border-t border-slate-50 pt-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full ${event.preparedByParents ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase">Pais Preparados</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full ${event.preparedByTherapists ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase">Terapeutas Cientes</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Modal de Evento */}
+                    <Modal isOpen={isEventModalOpen} onClose={() => setIsEventModalOpen(false)} title={eventForm.id ? "Editar Evento" : "Novo Evento de Adaptação"}>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Evento</label>
+                                    <Select value={eventForm.type} onChange={e => setEventForm({...eventForm, type: e.target.value as AdaptationEventType})}>
+                                        <option value="Passeio">🚌 Passeio</option>
+                                        <option value="Feira">🔬 Feira de Ciências</option>
+                                        <option value="Substituição">👩‍🏫 Subst. de Professor</option>
+                                        <option value="Simulado">🔔 Simulado de Incêndio</option>
+                                        <option value="Evento">🎈 Evento Escolar</option>
+                                        <option value="Outro">❓ Outro</option>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Data</label>
+                                    <Input type="date" value={eventForm.date} onChange={e => setEventForm({...eventForm, date: e.target.value})} />
+                                </div>
+                            </div>
+                            <Input label="Título do Evento" placeholder="Ex: Visita ao Museu" value={eventForm.title} onChange={e => setEventForm({...eventForm, title: e.target.value})} />
+                            <TextArea label="Descrição / Detalhes" placeholder="Explique o que mudará na rotina..." value={eventForm.description} onChange={e => setEventForm({...eventForm, description: e.target.value})} />
+                            
+                            <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 flex gap-3">
+                                <AlertTriangle className="w-5 h-5 text-blue-500 shrink-0" />
+                                <p className="text-[10px] text-blue-800 leading-tight">
+                                    <strong>Ação Corretiva:</strong> Ao salvar, os pais receberão um alerta para preparar a criança com Histórias Sociais e antecipação visual, reduzindo crises por quebra de rotina.
+                                </p>
+                            </div>
+
+                            <Button onClick={handleSaveEvent} disabled={isSavingEvent || !eventForm.title || !eventForm.date} className="w-full bg-purple-600 hover:bg-purple-700 font-bold">
+                                {isSavingEvent ? <Loader2 className="w-5 h-5 animate-spin mx-auto"/> : (eventForm.id ? "Atualizar Evento" : "Confirmar e Alertar Família")}
+                            </Button>
+                        </div>
+                    </Modal>
+
 
             {/* --- HISTÓRICO COMPLETO --- */}
             {activeSubTab === 'history' && (

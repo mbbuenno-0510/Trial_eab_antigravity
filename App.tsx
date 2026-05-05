@@ -206,6 +206,7 @@ const AppContent: React.FC = () => {
             switch (currentView) {
                 case 'school_home': return <SchoolView userProfile={userProfile} activeSubTab="home" selectedStudentId={selectedChildId} onSelectStudent={setSelectedChildId} onChangeView={(v) => setCurrentView(v as any)} />;
                 case 'school_log': return <SchoolView userProfile={userProfile} activeSubTab="log" selectedStudentId={selectedChildId} onSelectStudent={setSelectedChildId} onChangeView={(v) => setCurrentView(v as any)} />;
+                case 'school_calendar': return <SchoolView userProfile={userProfile} activeSubTab="calendar" selectedStudentId={selectedChildId} onSelectStudent={setSelectedChildId} onChangeView={(v) => setCurrentView(v as any)} />;
                 case 'school_history': return <SchoolView userProfile={userProfile} activeSubTab="history" selectedStudentId={selectedChildId} onSelectStudent={setSelectedChildId} onChangeView={(v) => setCurrentView(v as any)} />;
                 case 'docs': return <DocsView userProfile={userProfile} preSelectedStudentId={selectedChildId} />;
                 default: return <SchoolView userProfile={userProfile} activeSubTab="home" selectedStudentId={selectedChildId} onSelectStudent={setSelectedChildId} onChangeView={(v) => setCurrentView(v as any)} />;
@@ -233,7 +234,13 @@ const AppContent: React.FC = () => {
             { id: 'docs', label: 'Docs', icon: FileText, show: true } 
         ];
     } else if (userProfile?.profileType === ProfileType.SCHOOL) {
-        navItems = [ { id: 'school_home', label: 'Início', icon: LayoutDashboard, show: true }, { id: 'school_log', label: 'Diário', icon: SchoolIcon, show: true, special: true }, { id: 'school_history', label: 'Histórico', icon: History, show: true }, { id: 'docs', label: 'Docs', icon: FileText, show: true } ];
+        navItems = [ 
+            { id: 'school_home', label: 'Início', icon: LayoutDashboard, show: true }, 
+            { id: 'school_calendar', label: 'Adaptação', icon: Calendar, show: true },
+            { id: 'school_log', label: 'Diário', icon: SchoolIcon, show: true, special: true }, 
+            { id: 'school_history', label: 'Histórico', icon: History, show: true }, 
+            { id: 'docs', label: 'Docs', icon: FileText, show: true } 
+        ];
     } else {
         navItems = [ { id: 'dashboard', label: 'Início', icon: LayoutDashboard, show: true }, { id: 'diary', label: 'Diário', icon: BookHeart, show: true }, { id: 'health', label: 'Saúde', icon: HeartPulse, show: userProfile?.profileType !== ProfileType.CHILD, special: true }, { id: 'routines', label: 'Rotinas', icon: ListTodo, show: true }, { id: 'docs', label: 'Docs', icon: FileText, show: true } ];
     }

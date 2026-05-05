@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'; 
-import { UserProfile, Appointment, MoodEntry, Therapy, TherapeuticGuideline } from '../types'; 
+import { UserProfile, Appointment, MoodEntry, Therapy, TherapeuticGuideline, AdaptationEvent } from '../types'; 
 import { db } from '../services/firebase'; 
 import { decryptData } from '../services/security';
 
@@ -12,6 +12,7 @@ interface DashboardData {
     upcomingTherapies: Appointment[]; 
     lastDiaryEntry: MoodEntry | null;
     therapeuticGuidelines: TherapeuticGuideline[];
+    adaptationEvents: AdaptationEvent[];
     loading: boolean;
 }
 
@@ -116,6 +117,7 @@ export const useDashboardData = (userProfile: UserProfile | null): DashboardData
         upcomingTherapies: [],
         lastDiaryEntry: null,
         therapeuticGuidelines: [],
+        adaptationEvents: [],
         loading: true,
     });
     
@@ -232,6 +234,13 @@ export const useDashboardData = (userProfile: UserProfile | null): DashboardData
             // Filter for guidelines that should be visible to parents
             const visibleToParents = guidelines.filter(g => g.targetAudience === 'Parents' || g.targetAudience === 'Both');
             setData(prev => ({ ...prev, therapeuticGuidelines: visibleToParents }));
+        }));
+        
+        // ADAPTATION EVENTS
+        const adaptationEventsRef = db.collection('users').doc(uid).collection('adaptation_events');
+        unsubscribes.push(adaptationEventsRef.onSnapshot((snapshot) => {
+            const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AdaptationEvent));
+            setData(prev => ({ ...prev, adaptationEvents: events }));
         }));
 
         return () => unsubscribes.forEach(unsub => unsub());

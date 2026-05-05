@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { User } from 'firebase/auth';
-import { LogOut, Wind, Sparkles, CheckCircle } from 'lucide-react'; 
+import { LogOut, Wind, Sparkles, CheckCircle, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react'; 
 
 // Importações dos componentes
 import WelcomeCard from './WelcomeCard';
@@ -38,7 +38,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
         totalDocuments,
         upcomingTherapies, 
         lastDiaryEntry,
-        therapeuticGuidelines
+        therapeuticGuidelines,
+        adaptationEvents
     } = useDashboardData(userProfile);
 
     const { isInstallable, isStandalone, installPWA } = usePWAInstall();
@@ -83,6 +84,18 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
             });
         } catch (error) {
             console.error("Error providing guideline feedback:", error);
+        }
+    };
+
+    const handleMarkEventAsPrepared = async (eventId: string) => {
+        if (!userProfile || !userProfile.manages || userProfile.manages.length === 0) return;
+        const targetUid = userProfile.manages[0];
+        try {
+            await db.collection('users').doc(targetUid).collection('adaptation_events').doc(eventId).update({
+                preparedByParents: true
+            });
+        } catch (error) {
+            console.error("Error marking event as prepared:", error);
         }
     };
     
@@ -167,6 +180,58 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
                     </div>
                 </div>
             )}
+
+            {/* 2.6 CALENDÁRIO DE ADAPTAÇÃO (Alertas da Escola) */}
+            {adaptationEvents.length > 0 && (
+                <div className="mb-8">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Calendar className="w-5 h-5 text-purple-500" />
+                        <h3 className="text-lg font-bold text-slate-700">Eventos de Adaptação (Escola)</h3>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                        {adaptationEvents.filter(e => {
+                            const eventDate = new Date(e.date + 'T12:00:00');
+                            return eventDate >= new Date(new Date().setHours(0,0,0,0));
+                        }).map(event => (
+                            <div key={event.id} className="p-4 bg-white border-2 border-purple-100 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="flex gap-4 items-start">
+                                    <div className="bg-purple-100 p-3 rounded-xl text-purple-600 shrink-0">
+                                        <Calendar className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full uppercase">{event.type}</span>
+                                            <span className="text-xs font-bold text-slate-400">{new Date(event.date + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                                        </div>
+                                        <h4 className="font-bold text-slate-800">{event.title}</h4>
+                                        {event.description && <p className="text-xs text-slate-500 mt-1">{event.description}</p>}
+                                    </div>
+                                </div>
+                                
+                                {!event.preparedByParents ? (
+                                    <div className="flex flex-col gap-2 shrink-0">
+                                        <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 flex gap-2 max-w-xs">
+                                            <AlertTriangle className="w-4 h-4 text-blue-500 shrink-0" />
+                                            <p className="text-[10px] text-blue-800 leading-tight">Prepare a criança com antecipação visual e histórias sociais para este evento.</p>
+                                        </div>
+                                        <Button 
+                                            onClick={() => handleMarkEventAsPrepared(event.id)}
+                                            className="bg-purple-600 hover:bg-purple-700 text-xs py-2 h-auto"
+                                        >
+                                            <CheckCircle2 className="w-4 h-4 mr-2" /> Marcar como Preparado
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-xl border border-green-100 font-bold text-xs shrink-0">
+                                        <CheckCircle2 className="w-4 h-4" /> Preparado
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
 
             {/* 3. CARTÕES DE DESTAQUE (Next Appointment & Last Diary) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

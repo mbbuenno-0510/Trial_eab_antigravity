@@ -391,3 +391,22 @@ export interface SchoolMedicationLog {
   timestamp: number | Date | FirestoreTimestamp;
   notes?: string;
 }
+
+// --- CALENDÁRIO DE ADAPTAÇÃO INCLUSIVA ---
+export type AdaptationEventType = 'Passeio' | 'Feira' | 'Substituição' | 'Simulado' | 'Evento' | 'Outro';
+
+export interface AdaptationEvent {
+  id: string;
+  userId: string; // The child's UID
+  schoolId: string;
+  title: string;
+  description: string;
+  date: string; // YYYY-MM-DD
+  time?: string;
+  type: AdaptationEventType;
+  createdAt: number | Date | FirestoreTimestamp;
+  
+  // Status de preparação
+  preparedByParents?: boolean;
+  preparedByTherapists?: boolean;
+}

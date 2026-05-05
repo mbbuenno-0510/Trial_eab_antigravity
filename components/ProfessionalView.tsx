@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { UserProfile, ProfileType, SessionLog, TherapeuticGoal, GoalType, GoalStatus, ChildExtendedProfile, MoodEntry, BehaviorEntry, SchoolLog, TherapeuticGuideline } from '../types';
+import { UserProfile, ProfileType, SessionLog, TherapeuticGoal, GoalType, GoalStatus, ChildExtendedProfile, MoodEntry, BehaviorEntry, SchoolLog, TherapeuticGuideline, AdaptationEvent, AdaptationEventType } from '../types';
 import { db, auth } from '../services/firebase';
 import { GoogleGenAI } from "@google/genai";
 import { 
@@ -115,6 +115,7 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
     const [rawRecentSessions, setRawRecentSessions] = useState<SessionLog[]>([]);
     const [rawSessionHistoryLogs, setRawSessionHistoryLogs] = useState<SessionLog[]>([]);
     const [guidelines, setGuidelines] = useState<TherapeuticGuideline[]>([]);
+    const [adaptationEvents, setAdaptationEvents] = useState<AdaptationEvent[]>([]);
 
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
     const [isGuidelineModalOpen, setGuidelineModalOpen] = useState(false);
@@ -335,7 +336,11 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
         const unsubGuidelines = db.collection('users').doc(targetUid).collection('therapeutic_guidelines')
             .onSnapshot(snap => setGuidelines(snap.docs.map(d => ({ id: d.id, ...d.data() } as TherapeuticGuideline))));
 
-        return () => { unsubProfile(); unsubGoals(); unsubSessions(); unsubGuidelines(); };
+        const unsubEvents = db.collection('users').doc(targetUid).collection('adaptation_events')
+            .orderBy('date', 'asc')
+            .onSnapshot(snap => setAdaptationEvents(snap.docs.map(d => ({ id: d.id, ...d.data() } as AdaptationEvent))));
+
+        return () => { unsubProfile(); unsubGoals(); unsubSessions(); unsubGuidelines(); unsubEvents(); };
     }, [targetUid, availablePatients]);
 
     useEffect(() => {
@@ -517,6 +522,17 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
                 readBySchool: false,
                 effectivenessFeedback: []
             });
+        }
+    };
+
+    const handleMarkEventAsAware = async (eventId: string) => {
+        if (!targetUid) return;
+        try {
+            await db.collection('users').doc(targetUid).collection('adaptation_events').doc(eventId).update({
+                preparedByTherapists: true
+            });
+        } catch (error) {
+            console.error("Error marking event as aware:", error);
         }
     };
 
@@ -789,6 +805,59 @@ const ProfessionalView: React.FC<ProfessionalViewProps> = ({ userProfile, active
                                 Gerenciar Diretrizes <ChevronRight className="w-4 h-4"/>
                             </Button>
                         </div>
+                    </Card>
+
+                    {/* NOVO: CARD DE ADAPTAÇÃO ESCOLAR */}
+                    <Card title="🏫 Adaptação Escolar (Alertas)" className="h-full border-l-4 border-l-purple-400">
+                        {adaptationEvents.filter(e => {
+                            const eventDate = new Date(e.date + 'T12:00:00');
+                            return eventDate >= new Date(new Date().setHours(0,0,0,0));
+                        }).length === 0 ? (
+                            <p className="text-slate-400 text-sm text-center py-8">Nenhuma alteração de rotina escolar programada.</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {adaptationEvents.filter(e => {
+                                    const eventDate = new Date(e.date + 'T12:00:00');
+                                    return eventDate >= new Date(new Date().setHours(0,0,0,0));
+                                }).map(event => (
+                                    <div key={event.id} className="p-3 rounded-xl border border-purple-100 bg-purple-50/30">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full uppercase">{event.type}</span>
+                                                <span className="text-xs font-bold text-slate-400">{new Date(event.date + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                                            </div>
+                                            {!event.preparedByTherapists && (
+                                                <button 
+                                                    onClick={() => handleMarkEventAsAware(event.id)}
+                                                    className="text-[10px] font-bold text-purple-600 hover:underline"
+                                                >
+                                                    Marcar como Ciente
+                                                </button>
+                                            )}
+                                        </div>
+                                        <h4 className="text-sm font-bold text-slate-800">{event.title}</h4>
+                                        {event.description && <p className="text-xs text-slate-500 mt-1">"{event.description}"</p>}
+                                        
+                                        <div className="mt-3 flex gap-4 pt-2 border-t border-purple-50">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${event.preparedByParents ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Pais Preparados</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${event.preparedByTherapists ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Minha Ciência</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 flex gap-2">
+                                    <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                                    <p className="text-[10px] text-amber-800 leading-tight">
+                                        Apoie a família sugerindo ou criando **Histórias Sociais** específicas para estes eventos.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </Card>
                 </div>
             )}
