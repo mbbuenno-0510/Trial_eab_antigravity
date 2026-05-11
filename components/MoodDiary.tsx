@@ -384,23 +384,13 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
       }
   }, [activeTab, targetUid]);
 
-  // Speech Recognition Setup
-  useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true; recognition.interimResults = false; recognition.lang = 'pt-BR';
-      recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => setIsListening(false);
-      recognition.onerror = (event: any) => { console.error("Speech Recognition Error:", event.error); setIsListening(false); };
-      recognition.onresult = (event: any) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) { if (event.results[i].isFinal) transcript += event.results[i][0].transcript; }
-        if (transcript) setNotes(prev => (prev && !prev.endsWith(' ')) ? prev + ' ' + transcript : prev + transcript);
-      };
-      recognitionRef.current = recognition;
-    }
-    return () => { if (recognitionRef.current) recognitionRef.current.stop(); };
+  // Speech Recognition Cleanup
+  useEffect(() => { 
+    return () => { 
+        if (recognitionRef.current) {
+            try { recognitionRef.current.stop(); } catch (e) {}
+        }
+    }; 
   }, []); 
 
   useEffect(() => { 
@@ -431,10 +421,64 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
   }, [history, entryDate, period]);
 
   const toggleListening = () => {
-    if (!recognitionRef.current) return;
-    stopAllAudio();
-    if (isListening) { recognitionRef.current.stop(); setIsListening(false); } 
-    else { textBaseRef.current = notes; recognitionRef.current.start(); }
+    if (isListening) {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) { console.error("Error stopping recognition:", e); }
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Seu navegador não suporta reconhecimento de voz.");
+      return;
+    }
+
+    try {
+      stopAllAudio();
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'pt-BR';
+
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => setIsListening(false);
+      
+      recognition.onerror = (event: any) => {
+        console.error("Speech Recognition Error:", event.error);
+        setIsListening(false);
+        if (event.error === 'not-allowed') {
+          alert("Permissão de microfone negada. Por favor, habilite o acesso nas configurações do seu navegador.");
+        } else if (event.error === 'network') {
+          alert("Erro de rede. Verifique sua conexão com a internet.");
+        } else if (event.error === 'service-not-allowed') {
+          alert("O serviço de reconhecimento de voz não está disponível no momento.");
+        }
+      };
+
+      recognition.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript;
+          }
+        }
+        if (transcript) {
+          setNotes(prev => {
+            const separator = (prev && !prev.endsWith(' ')) ? ' ' : '';
+            return prev + separator + transcript;
+          });
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (error) {
+      console.error("Error starting speech recognition:", error);
+      alert("Não foi possível iniciar o reconhecimento de voz.");
+      setIsListening(false);
+    }
   };
 
   const handleSpeakExplanation = () => {
