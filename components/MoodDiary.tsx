@@ -438,8 +438,8 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
     try {
       stopAllAudio();
       const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.interimResults = false;
       recognition.lang = 'pt-BR';
 
       recognition.onstart = () => setIsListening(true);
@@ -450,20 +450,11 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
         setIsListening(false);
         if (event.error === 'not-allowed') {
           alert("Permissão de microfone negada. Por favor, habilite o acesso nas configurações do seu navegador.");
-        } else if (event.error === 'network') {
-          alert("Erro de rede. Verifique sua conexão com a internet.");
-        } else if (event.error === 'service-not-allowed') {
-          alert("O serviço de reconhecimento de voz não está disponível no momento.");
         }
       };
 
       recognition.onresult = (event: any) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            transcript += event.results[i][0].transcript;
-          }
-        }
+        const transcript = event.results[0][0].transcript;
         if (transcript) {
           setNotes(prev => {
             const separator = (prev && !prev.endsWith(' ')) ? ' ' : '';
@@ -719,7 +710,7 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase block mb-1.5 ml-1">Notas (Opcional)</label>
                                 <div className="relative">
-                                    <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full p-3 border border-slate-200 rounded-xl resize-none" placeholder="Como você se sente?" />
+                                    <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className={`w-full p-3 border ${isListening ? 'border-red-400 ring-2 ring-red-100' : 'border-slate-200'} rounded-xl resize-none transition-all`} placeholder={isListening ? "Ouvindo... Fale agora" : "Como você se sente?"} />
                                     <button type="button" onClick={toggleListening} className={`absolute right-2 top-2 p-2 rounded-full transition-colors ${isListening ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>{isListening ? <StopCircle className="w-4 h-4" /> : <Mic className="w-4 h-4" />}</button>
                                 </div>
                             </div>
