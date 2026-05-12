@@ -470,6 +470,13 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
             return prev + separator + transcript;
           });
         }
+        // Forçar parada para liberar hardware no Android
+        try { recognition.stop(); } catch (e) {}
+      };
+
+      recognition.onspeechend = () => {
+        try { recognition.stop(); } catch (e) {}
+        setIsListening(false);
       };
 
       recognitionRef.current = recognition;
