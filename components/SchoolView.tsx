@@ -3,7 +3,7 @@ import { UserProfile, SchoolLog, ChildExtendedProfile, Medication, StoredDocumen
 import { db, auth } from '../services/firebase';
 import firebase from 'firebase/compat/app';
 import { 
-    GraduationCap, Users, BookOpen, AlertOctagon, Lightbulb, 
+    GraduationCap, Users, BookOpen, AlertOctagon, Lightbulb, Bell,
     Save, Calendar, LogOut, ChevronDown, Loader2, ExternalLink, Hash, Search, ArrowRight, Plus, Trash2, Edit2, Pill, FileText, CheckCircle, Clock, Activity, AlertTriangle, Star
 } from 'lucide-react';
 import { Card, Button, Input, TextArea, Modal, Select } from './ui';
@@ -900,14 +900,28 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                             </div>
                         </div>
                         
-                        <button 
-                            onClick={handleLogout}
-                            className="text-purple-400 hover:text-purple-600 transition-colors p-2"
-                            title="Sair"
-                        >
-                            <LogOut className="w-5 h-5"/>
-                        </button>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setIsNotificationModalOpen(true)}
+                                className="text-purple-400 hover:text-purple-600 transition-colors p-2"
+                                title="Configurar Lembretes"
+                            >
+                                <Bell className="w-5 h-5"/>
+                            </button>
+                            <button 
+                                onClick={handleLogout}
+                                className="text-purple-400 hover:text-purple-600 transition-colors p-2"
+                                title="Sair"
+                            >
+                                <LogOut className="w-5 h-5"/>
+                            </button>
+                        </div>
                     </div>
+                    {userProfile.diaryReminderTime && (
+                        <div className="mt-2 text-[10px] font-bold text-purple-600/60 uppercase tracking-widest flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> Lembrete diário às {userProfile.diaryReminderTime}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -1601,21 +1615,7 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                                 <Star className={`w-4 h-4 ${editIsAchievement ? 'fill-amber-400' : ''}`} /> Conquista Pedagógica
                             </span>
                         </label>
-                             <LogOut className="w-5 h-5"/>
-                        </button>
-                    </div>
-                    
-                    <div className="mt-4 flex gap-2">
-                        <button 
-                            onClick={() => setIsNotificationModalOpen(true)}
-                            className="flex items-center gap-2 bg-white/50 hover:bg-white px-3 py-1.5 rounded-full text-[10px] font-bold text-purple-700 transition-all shadow-sm border border-purple-200"
-                        >
-                            <Bell className="w-3.5 h-3.5" /> 
-                            {userProfile.diaryReminderTime ? `Lembrete às ${userProfile.diaryReminderTime}` : 'Configurar Lembrete Diário'}
-                        </button>
-                    </div>
-                </div>
-            )}
+                        {editIsAchievement && (
                             <TextArea 
                                 placeholder="Descreva a conquista..."
                                 value={editAchievementDescription}
@@ -1631,7 +1631,7 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                 </div>
             </Modal>
 
-            {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO (NOVO) */}
+            {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
             <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirmar Exclusão">
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600">Tem certeza que deseja excluir este registro do histórico?</p>
@@ -1644,7 +1644,7 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                 </div>
             </Modal>
 
-            {/* MODAL DE CONFIRMAÇÃO DE ADMINISTRAÇÃO (SUBSTITUI window.confirm) */}
+            {/* MODAL DE CONFIRMAÇÃO DE ADMINISTRAÇÃO */}
             <Modal isOpen={isConfirmAdministerModalOpen} onClose={() => setIsConfirmAdministerModalOpen(false)} title="Confirmar Administração">
                 <div className="space-y-4">
                     {administerData && (
@@ -1688,11 +1688,6 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                 document={documentToView}
             />
 
-        </div>
-    );
-};
-
-export default SchoolView;
             {/* MODAL DE CONFIGURAÇÃO DE NOTIFICAÇÃO (NOVO) */}
             <Modal isOpen={isNotificationModalOpen} onClose={() => setIsNotificationModalOpen(false)} title="Alertas de Notificação">
                 <div className="space-y-4">
