@@ -9,6 +9,9 @@ import { Loader2, Calendar as CalendarIcon, Mic, StopCircle, Bot, Trash2, Volume
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import RobotMascot from './RobotMascot';
 import BehaviorDiary from './BehaviorDiary'; 
+import { offlineDb } from '../services/offlineDb';
+import { syncOfflineData } from '../services/syncService';
+import { useLiveQuery } from "dexie-react-hooks";
 
 const GEMINI_KEY = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
 const ai = new GoogleGenAI({ apiKey: GEMINI_KEY }); 
@@ -300,6 +303,12 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
   const [isHistoryAudioLoading, setIsHistoryAudioLoading] = useState(false);
   const historyAudioCache = useRef<Record<string, AudioBuffer>>({});
 
+  // --- NOVO: OFFLINE DATA ---
+  const unsyncedEntries = useLiveQuery(
+    () => offlineDb.moodEntries.where('synced').equals(0).toArray(),
+    []
+  ) || [];
+
   const stopAllAudio = useCallback(() => {
       if (isListening && recognitionRef.current) recognitionRef.current.stop();
       if (window.speechSynthesis) window.speechSynthesis.cancel();
@@ -528,9 +537,25 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
             aiFeedback: encryptedAiFeedback 
         };
         
-        const path = `users/${targetUid}/mood_entries`;
-        if(targetUid) await db.collection("users").doc(targetUid).collection("mood_entries").add(moodEntry).catch(err => handleFirestoreError(err, OperationType.WRITE, path));
-        else throw new Error("UID de destino não encontrado.");
+        // SALVAR LOCALMENTE PRIMEIRO (MODO OFFLINE)
+        const localId = await offlineDb.moodEntries.add({
+            userId: targetUid,
+            data: moodEntry as any,
+            synced: false,
+            timestamp: Date.now()
+        });
+
+        if (navigator.onLine) {
+            try {
+                const path = `users/${targetUid}/mood_entries`;
+                await db.collection("users").doc(targetUid).collection("mood_entries").add(moodEntry).catch(err => handleFirestoreError(err, OperationType.WRITE, path));
+                // Marcar como sincronizado se deu certo
+                await offlineDb.moodEntries.update(localId, { synced: true });
+            } catch (error) {
+                console.warn("Internet instável, salvo offline para sincronização posterior.");
+            }
+        }
+
         setCurrentInsight(aiFeedback); setDisplayState('insight');
     } catch (error: any) { console.error("Erro ao salvar:", error); alert(`Falha ao registrar humor: ${error.message || 'Erro desconhecido'}`); } 
     finally { setIsAnalysing(false); }
@@ -571,7 +596,16 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
   // --- FILTROS APLICADOS ---
 
   const filteredHistory = useMemo(() => {
-    let result: MoodEntry[] = history.filter(e => {
+    // Merge local unsynced data with history from Firestore
+    const localMoods: MoodEntry[] = unsyncedEntries.map(e => ({ 
+        id: `offline-${e.localId}`, 
+        ...e.data,
+        isOffline: true 
+    }));
+
+    let combined = [...localMoods, ...history];
+
+    let result: MoodEntry[] = combined.filter(e => {
         const entryMoodCategory = EMOTION_DETAILS[e.mood]?.category;
         if (moodFilter && entryMoodCategory !== moodFilter) return false;
         // Date Range
@@ -586,7 +620,7 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
         return periodOrderA - periodOrderB;
     });
     return result;
-  }, [history, moodFilter, startDate, endDate]);
+  }, [history, unsyncedEntries, moodFilter, startDate, endDate]);
 
   const filteredCalmHistory = useMemo(() => {
       let result = calmHistory;
@@ -756,7 +790,14 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
                             <div className="flex items-center gap-2">
                                 <span className="text-2xl">{details.icon}</span>
                                 <div>
-                                    <p className="font-bold text-slate-800 text-sm">{details.label}</p>
+                                    <p className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        {details.label}
+                                        {('isOffline' in entry && entry.isOffline) && (
+                                            <span className="bg-amber-100 text-amber-700 text-[8px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                                <Clock className="w-2 h-2" /> Offline
+                                            </span>
+                                        )}
+                                    </p>
                                     <p className="text-xs text-slate-500">{new Date(entry.dateString).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - {entry.period}</p>
                                 </div>
                             </div>

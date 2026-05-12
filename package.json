@@ -11,8 +11,9 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
-    "dexie": "^4.0.0",
     "@google/genai": "^1.31.0",
+    "dexie": "^4.4.2",
+    "dexie-react-hooks": "^4.4.0",
     "firebase": "^12.6.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",

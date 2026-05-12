@@ -2,7 +2,9 @@
 
 import React from 'react';
 import { User } from 'firebase/auth';
-import { LogOut, Wind, Sparkles, CheckCircle, Calendar, AlertTriangle, CheckCircle2, Star, Trophy } from 'lucide-react'; 
+import { LogOut, Wind, Sparkles, CheckCircle, Calendar, AlertTriangle, CheckCircle2, Star, Trophy, Wifi, WifiOff } from 'lucide-react'; 
+import { useEffect, useState } from 'react';
+import { syncOfflineData } from '../services/syncService';
 
 // Importações dos componentes
 import WelcomeCard from './WelcomeCard';
@@ -44,6 +46,27 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
     } = useDashboardData(userProfile);
 
     const { isInstallable, isStandalone, installPWA } = usePWAInstall();
+    
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+            syncOfflineData();
+        };
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        
+        // Sincronização inicial se estiver online
+        if (navigator.onLine) syncOfflineData();
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
 
     // Seleciona o próximo compromisso para o card de destaque
     const nextAppointment = upcomingTherapies.length > 0 ? upcomingTherapies[0] : null;
@@ -109,6 +132,20 @@ const Dashboard: React.FC<DashboardProps> = ({ currentUser, userProfile, onChang
 
     return (
         <div className="p-4 md:p-6 max-w-4xl mx-auto animate-in fade-in duration-500">
+            
+            {!isOnline && (
+                <div className="mb-6 bg-amber-100 border-2 border-amber-300 p-4 rounded-2xl flex items-center justify-between shadow-sm animate-pulse">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-amber-500 p-2 rounded-full text-white">
+                            <WifiOff className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-amber-900">Modo Offline Ativo</p>
+                            <p className="text-[10px] text-amber-700">Você pode continuar registrando. Os dados serão sincronizados quando a internet voltar.</p>
+                        </div>
+                    </div>
+                </div>
+            )}
             
             {/* 1. CABEÇALHO COM WELCOMECARD E BOTÃO SAIR */}
             <div className="flex justify-between items-start mb-6">
