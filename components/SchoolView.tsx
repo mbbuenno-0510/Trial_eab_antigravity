@@ -129,6 +129,11 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
         title: '',
         description: ''
     });
+    
+    // --- NOVO: ESTADOS PARA CONFIGURAÇÃO DE NOTIFICAÇÃO ---
+    const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+    const [reminderTime, setReminderTime] = useState(userProfile.diaryReminderTime || '17:30');
+    const [isSavingNotification, setIsSavingNotification] = useState(false);
 
     // FUNÇÃO DE LOGOUT (Limpa Buffer)
     const handleLogout = () => {
@@ -1596,7 +1601,21 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                                 <Star className={`w-4 h-4 ${editIsAchievement ? 'fill-amber-400' : ''}`} /> Conquista Pedagógica
                             </span>
                         </label>
-                        {editIsAchievement && (
+                             <LogOut className="w-5 h-5"/>
+                        </button>
+                    </div>
+                    
+                    <div className="mt-4 flex gap-2">
+                        <button 
+                            onClick={() => setIsNotificationModalOpen(true)}
+                            className="flex items-center gap-2 bg-white/50 hover:bg-white px-3 py-1.5 rounded-full text-[10px] font-bold text-purple-700 transition-all shadow-sm border border-purple-200"
+                        >
+                            <Bell className="w-3.5 h-3.5" /> 
+                            {userProfile.diaryReminderTime ? `Lembrete às ${userProfile.diaryReminderTime}` : 'Configurar Lembrete Diário'}
+                        </button>
+                    </div>
+                </div>
+            )}
                             <TextArea 
                                 placeholder="Descreva a conquista..."
                                 value={editAchievementDescription}
@@ -1669,6 +1688,66 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                 document={documentToView}
             />
 
+        </div>
+    );
+};
+
+export default SchoolView;
+            {/* MODAL DE CONFIGURAÇÃO DE NOTIFICAÇÃO (NOVO) */}
+            <Modal isOpen={isNotificationModalOpen} onClose={() => setIsNotificationModalOpen(false)} title="Alertas de Notificação">
+                <div className="space-y-4">
+                    <div className="bg-purple-50 p-4 rounded-2xl border border-purple-100 flex gap-3">
+                        <Bell className="w-6 h-6 text-purple-600 shrink-0" />
+                        <div className="flex-1">
+                            <p className="text-sm font-bold text-purple-900">Lembrete do Diário de Sala</p>
+                            <p className="text-[10px] text-purple-700">Receba um alerta se o diário de algum aluno não for preenchido até o horário definido.</p>
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Horário do Lembrete</label>
+                        <div className="flex items-center gap-3">
+                            <Clock className="w-5 h-5 text-slate-400" />
+                            <input 
+                                type="time" 
+                                value={reminderTime}
+                                onChange={(e) => setReminderTime(e.target.value)}
+                                className="flex-1 bg-white border border-slate-200 rounded-xl py-3 px-4 font-bold text-lg text-slate-700 outline-none focus:border-purple-500"
+                            />
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-2 italic">Recomendamos definir para o final do período (ex: 11:30 ou 17:30).</p>
+                    </div>
+
+                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 flex gap-2">
+                        <Activity className="w-4 h-4 text-blue-500 shrink-0" />
+                        <p className="text-[10px] text-blue-800 leading-tight">
+                            <strong>Ação Automática:</strong> O sistema verificará se você já salvou o registro de hoje. Se não encontrar, emitirá um alerta sonoro e visual.
+                        </p>
+                    </div>
+
+                    <Button 
+                        onClick={async () => {
+                            setIsSavingNotification(true);
+                            try {
+                                await db.collection('users').doc(userProfile.uid).update({
+                                    diaryReminderTime: reminderTime
+                                });
+                                alert("Configuração de notificação salva com sucesso!");
+                                setIsNotificationModalOpen(false);
+                            } catch (error) {
+                                console.error("Erro ao salvar notificação:", error);
+                                alert("Erro ao salvar configuração.");
+                            } finally {
+                                setIsSavingNotification(false);
+                            }
+                        }} 
+                        disabled={isSavingNotification}
+                        className="w-full bg-purple-600 hover:bg-purple-700 font-bold"
+                    >
+                        {isSavingNotification ? <Loader2 className="w-4 h-4 animate-spin mx-auto"/> : "Salvar Configurações"}
+                    </Button>
+                </div>
+            </Modal>
         </div>
     );
 };

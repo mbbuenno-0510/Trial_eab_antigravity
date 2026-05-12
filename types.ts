@@ -45,6 +45,9 @@ export interface UserProfile {
   childLoginEmail?: string; 
   childUsername?: string; 
   childPassword?: string;
+  
+  // Configurações de Notificações
+  diaryReminderTime?: string; // HH:mm para lembrete de registro escolar
 }
 
 // --- REGRAS DE ACESSO AO PERFIL ---

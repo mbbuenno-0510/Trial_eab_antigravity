@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, handleFirestoreError, OperationType } from '../services/firebase';
 import { Medication, Therapy, Appointment, ProfileType, UserProfile } from '../types';
-import { Bell, Volume2, Pill, Puzzle, Stethoscope, Check, X } from 'lucide-react';
+import { Bell, Volume2, Pill, Puzzle, Stethoscope, Check, X, BookOpen } from 'lucide-react';
 import { Button } from './ui';
 
 interface GlobalAlarmMonitorProps {
@@ -14,9 +14,10 @@ const GlobalAlarmMonitor: React.FC<GlobalAlarmMonitorProps> = ({ userProfile }) 
     const [therapies, setTherapies] = useState<Therapy[]>([]);
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     
-    const [activeAlarms, setActiveAlarms] = useState<(Medication | Therapy | Appointment)[]>([]);
+    const [activeAlarms, setActiveAlarms] = useState<(Medication | Therapy | Appointment | { id: string, type: 'diary', studentName: string })[]>([]);
     const [triggeredAlarms, setTriggeredAlarms] = useState<Set<string>>(new Set());
     const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+    const [todaySchoolLogs, setTodaySchoolLogs] = useState<Record<string, boolean>>({}); // studentId -> hasLogToday
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const [childDisplayName, setChildDisplayName] = useState<string | null>(null);
@@ -115,6 +116,29 @@ const GlobalAlarmMonitor: React.FC<GlobalAlarmMonitorProps> = ({ userProfile }) 
         };
     }, [targetUid]);
 
+    // School Diary Monitor - Check if today's logs exist
+    useEffect(() => {
+        if (userProfile.profileType !== ProfileType.SCHOOL || !userProfile.cnpj) return;
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        // Listen to logs for authorized students for today
+        // Note: This is simplified. In a real app with many students, we'd need a more specific query.
+        const unsub = db.collectionGroup('school_logs')
+            .where('date', '==', todayStr)
+            .where('schoolId', '==', userProfile.uid)
+            .onSnapshot(snapshot => {
+                const logsExist: Record<string, boolean> = {};
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    if (data.userId) logsExist[data.userId] = true;
+                });
+                setTodaySchoolLogs(logsExist);
+            });
+            
+        return () => unsub();
+    }, [userProfile.profileType, userProfile.cnpj, userProfile.uid]);
+
     // Alarm Background Monitor
     useEffect(() => {
         const checkAlarms = () => {
@@ -189,6 +213,33 @@ const GlobalAlarmMonitor: React.FC<GlobalAlarmMonitorProps> = ({ userProfile }) 
                 }
             });
 
+            // 4. School Diary Reminder
+            if (userProfile.profileType === ProfileType.SCHOOL && userProfile.diaryReminderTime === currentTime) {
+                const alarmKey = `diary-reminder-${todayStr}-${currentTime}`;
+                if (!newTriggered.has(alarmKey)) {
+                    newTriggered.add(alarmKey);
+                    
+                    // Trigger alert if there are students managed by this school that don't have a log today
+                    // (For simplicity, we check if the selected student or any managed student is missing)
+                    const studentId = targetUid;
+                    if (studentId && !todaySchoolLogs[studentId]) {
+                        alarmsToActivate.push({ 
+                            id: `diary-${studentId}`, 
+                            type: 'diary', 
+                            studentName: childDisplayName || 'aluno(a)' 
+                        } as any);
+                        foundNewAlarm = true;
+
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            new Notification('Lembrete: Diário de Sala', {
+                                body: `Não esqueça de registrar o diário de sala para ${childDisplayName || 'seu aluno'}.`,
+                                icon: '/favicon.ico'
+                            });
+                        }
+                    }
+                }
+            }
+
             if (foundNewAlarm) {
                 setTriggeredAlarms(newTriggered);
                 setActiveAlarms(prev => {
@@ -200,10 +251,9 @@ const GlobalAlarmMonitor: React.FC<GlobalAlarmMonitorProps> = ({ userProfile }) 
             }
         };
 
-        // Verificação mais frequente (a cada 10 segundos) para evitar "pular" minutos em conexões lentas
         const interval = setInterval(checkAlarms, 10000); 
         return () => clearInterval(interval);
-    }, [medications, therapies, appointments, triggeredAlarms, childDisplayName]);
+    }, [medications, therapies, appointments, triggeredAlarms, childDisplayName, userProfile, todaySchoolLogs, targetUid]);
 
     const handleDismissAlarm = (id: string) => {
         setActiveAlarms(prev => {
@@ -235,25 +285,34 @@ const GlobalAlarmMonitor: React.FC<GlobalAlarmMonitorProps> = ({ userProfile }) 
                 
                 <div className="p-6 space-y-4 max-h-[40vh] overflow-y-auto">
                     {activeAlarms.map(item => {
-                        const isMed = 'dosageValue' in item;
-                        const isTherapy = 'dayOfWeek' in item && !('date' in item);
-                        const isAppt = 'date' in item;
+                        const isDiary = 'type' in item && item.type === 'diary';
+                        const isMed = !isDiary && 'dosageValue' in item;
+                        const isTherapy = !isDiary && 'dayOfWeek' in item && !('date' in item);
+                        const isAppt = !isDiary && 'date' in item;
 
                         let title = '';
                         let subtitle = '';
                         let icon = null;
 
                         if (isMed) {
-                            title = item.name;
-                            subtitle = `${item.dosageValue} ${item.dosageUnit}`;
+                            const med = item as Medication;
+                            title = med.name;
+                            subtitle = `${med.dosageValue} ${med.dosageUnit}`;
                             icon = <Pill className="w-6 h-6 text-red-500" />;
+                        } else if (isDiary) {
+                            const diary = item as { id: string, type: 'diary', studentName: string };
+                            title = 'Registro Pendente';
+                            subtitle = `Diário de Sala: ${diary.studentName}`;
+                            icon = <BookOpen className="w-6 h-6 text-orange-500" />;
                         } else if (isTherapy) {
-                            title = item.name;
-                            subtitle = `Terapia - às ${item.time}`;
+                            const therapy = item as Therapy;
+                            title = therapy.name;
+                            subtitle = `Terapia - às ${therapy.time}`;
                             icon = <Puzzle className="w-6 h-6 text-teal-500" />;
                         } else if (isAppt) {
-                            title = (item as Appointment).title;
-                            subtitle = `Consulta: ${(item as Appointment).specialty} às ${item.time}`;
+                            const appt = item as Appointment;
+                            title = appt.title;
+                            subtitle = `Consulta: ${appt.specialty} às ${appt.time}`;
                             icon = <Stethoscope className="w-6 h-6 text-blue-500" />;
                         }
 
