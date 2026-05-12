@@ -9,6 +9,8 @@ import {
 import { Card, Button, Input, TextArea, Modal, Select } from './ui';
 import DocumentViewModal from './DocumentViewModal'; // Import para visualizar receitas
 import { GuidelineCard } from './GuidelineCard';
+import { offlineDb } from '../services/offlineDb';
+import { useLiveQuery } from "dexie-react-hooks";
 
 interface SchoolViewProps {
     userProfile: UserProfile;
@@ -134,6 +136,21 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
     const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
     const [reminderTime, setReminderTime] = useState(userProfile.diaryReminderTime || '17:30');
     const [isSavingNotification, setIsSavingNotification] = useState(false);
+
+    // --- NOVO: OFFLINE DATA ---
+    const targetUid = useMemo(() => {
+        return selectedStudentId || null;
+    }, [selectedStudentId]);
+
+    const unsyncedSchoolEntries = useLiveQuery(
+        () => offlineDb.schoolLogs.where('userId').equals(targetUid || '').toArray(),
+        [targetUid]
+    ) || [];
+    
+    const unsyncedMedEntries = useLiveQuery(
+        () => offlineDb.medicationLogs.where('userId').equals(targetUid || '').toArray(),
+        [targetUid]
+    ) || [];
 
     // FUNÇÃO DE LOGOUT (Limpa Buffer)
     const handleLogout = () => {
@@ -282,10 +299,7 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
     }, [userProfile.uid, selectedStudentId]);
 
     // Identificar a Criança Alvo
-    // ALTERAÇÃO: Depende EXCLUSIVAMENTE da seleção manual.
-    const targetUid = useMemo(() => {
-        return selectedStudentId || null;
-    }, [selectedStudentId]);
+    // (targetUid agora declarado acima para suportar offline hooks)
 
     // --- BUSCAR MEDICAMENTOS PARA ESCOLA ---
     useEffect(() => {
@@ -341,24 +355,6 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
         setIsAdministering(prev => ({ ...prev, [med.id!]: true }));
 
         try {
-            // VERIFICAÇÃO DE DUPLICIDADE (Otimizada)
-            const logsCollection = db.collection('users').doc(targetUid).collection('school_medication_logs');
-            
-            // Busca apenas por ID e Data para evitar erro de índice composto complexo com Time
-            const duplicateQuery = await logsCollection
-                .where('medicationId', '==', med.id)
-                .where('date', '==', date)
-                .get();
-
-            // Filtra o horário em memória
-            const isDuplicate = duplicateQuery.docs.some(doc => doc.data().time === time);
-
-            if (isDuplicate) {
-                alert(`ERRO: Já existe um registro para ${med.name} nesta data (${date}) e horário (${time}).`);
-                return;
-            }
-
-            // SE NÃO HOUVER DUPLICIDADE, GRAVA
             const logEntry: Omit<SchoolMedicationLog, 'id'> = {
                 userId: targetUid,
                 schoolId: userProfile.uid,
@@ -372,8 +368,36 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                 notes: 'Administrado na escola'
             };
 
-            await logsCollection.add(logEntry);
-            alert(`Administração de ${med.name} registrada com sucesso!`);
+            // SALVAR LOCALMENTE PRIMEIRO
+            const localId = await offlineDb.medicationLogs.add({
+                userId: targetUid,
+                data: logEntry as any,
+                synced: false,
+                timestamp: Date.now()
+            });
+
+            if (navigator.onLine) {
+                // VERIFICAÇÃO DE DUPLICIDADE (Otimizada)
+                const logsCollection = db.collection('users').doc(targetUid).collection('school_medication_logs');
+                
+                const duplicateQuery = await logsCollection
+                    .where('medicationId', '==', med.id)
+                    .where('date', '==', date)
+                    .get();
+
+                const isDuplicate = duplicateQuery.docs.some(doc => doc.data().time === time);
+
+                if (isDuplicate) {
+                    alert(`ERRO: Já existe um registro para ${med.name} nesta data (${date}) e horário (${time}).`);
+                    return;
+                }
+
+                await logsCollection.add(logEntry);
+                await offlineDb.medicationLogs.update(localId, { synced: true });
+                alert(`Administração de ${med.name} registrada com sucesso!`);
+            } else {
+                alert(`Administração de ${med.name} salva offline para sincronização posterior.`);
+            }
 
         } catch (error: any) {
             console.error("Erro ao registrar medicação:", error);
@@ -435,7 +459,13 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
             .orderBy('date', 'desc')
             .limit(10)
             .onSnapshot(snap => {
-                setRecentLogs(snap.docs.map(d => ({ id: d.id, ...d.data() } as SchoolLog)));
+                const firebaseLogs = snap.docs.map(d => ({ id: d.id, ...d.data() } as SchoolLog));
+                // Merge with unsynced
+                const unsyncedSchool = unsyncedSchoolEntries
+                    .filter(e => !e.synced)
+                    .map(e => ({ id: `offline-${e.localId}`, ...e.data, isOffline: true } as SchoolLog));
+                
+                setRecentLogs([...unsyncedSchool, ...firebaseLogs]);
             }, (error) => {
                 console.error("Erro ao ler logs comportamentais:", error);
             });
@@ -445,7 +475,13 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
             .orderBy('timestamp', 'desc')
             .limit(20)
             .onSnapshot(snap => {
-                setMedicationLogs(snap.docs.map(d => ({ id: d.id, ...d.data() } as SchoolMedicationLog)));
+                const firebaseLogs = snap.docs.map(d => ({ id: d.id, ...d.data() } as SchoolMedicationLog));
+                // Merge with unsynced
+                const unsyncedMeds = unsyncedMedEntries
+                    .filter(e => !e.synced)
+                    .map(e => ({ id: `offline-${e.localId}`, ...e.data, isOffline: true } as SchoolMedicationLog));
+                
+                setMedicationLogs([...unsyncedMeds, ...firebaseLogs]);
             }, (error) => {
                 console.error("Erro ao ler logs de medicação:", error);
             });
@@ -522,9 +558,22 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
                 achievementDescription: isAchievement ? achievementDescription : ''
             };
 
-            await db.collection('users').doc(targetUid).collection('school_logs').add(newLog);
+            // SALVAR LOCALMENTE PRIMEIRO
+            const localId = await offlineDb.schoolLogs.add({
+                userId: targetUid,
+                data: newLog as any,
+                synced: false,
+                timestamp: Date.now()
+            });
 
-            alert("Registro escolar salvo com sucesso!");
+            if (navigator.onLine) {
+                await db.collection('users').doc(targetUid).collection('school_logs').add(newLog);
+                await offlineDb.schoolLogs.update(localId, { synced: true });
+                alert("Registro escolar salvo com sucesso!");
+            } else {
+                alert("Registro salvo offline para sincronização posterior.");
+            }
+
             setDysregulationCount(0);
             setDysregulationDetails('');
             setSuccessfulStrategies('');
@@ -713,8 +762,13 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
         return (
             <div key={log.id} className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                    <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded flex items-center gap-1">
                         {new Date(log.date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                        {('isOffline' in log && log.isOffline) && (
+                            <span className="bg-amber-100 text-amber-700 text-[8px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 ml-1">
+                                <Clock className="w-2 h-2" /> Offline
+                            </span>
+                        )}
                     </span>
                     <div className="flex items-center gap-2">
                         {log.dysregulationCount > 0 && (
@@ -786,8 +840,13 @@ const SchoolView: React.FC<SchoolViewProps> = ({ userProfile, activeSubTab, sele
             <div className="pl-3">
                 <div className="flex justify-between items-start mb-1">
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold bg-pink-50 text-pink-700 px-2 py-1 rounded">
+                        <span className="text-xs font-bold bg-pink-50 text-pink-700 px-2 py-1 rounded flex items-center gap-1">
                             {new Date(log.date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                            {('isOffline' in log && log.isOffline) && (
+                                <span className="bg-amber-100 text-amber-700 text-[8px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 ml-1">
+                                    <Clock className="w-2 h-2" /> Offline
+                                </span>
+                            )}
                         </span>
                         <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
                             <Clock className="w-3 h-3"/> {log.time}
