@@ -452,7 +452,10 @@ const MoodDiary: React.FC<MoodDiaryProps> = ({ userProfile, preSelectedChildId, 
       recognition.lang = 'pt-BR';
 
       recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => setIsListening(false);
+      recognition.onend = () => {
+        setIsListening(false);
+        try { recognition.stop(); } catch (e) {}
+      };
       
       recognition.onerror = (event: any) => {
         console.error("Speech Recognition Error:", event.error);
