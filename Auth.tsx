@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import firebase, { auth, db } from './services/firebase';
 import { ProfileType, MoodType } from './types';
-import { Loader2, ArrowLeft, User, ShieldCheck, CheckCircle2, Stethoscope, GraduationCap, Mail, RefreshCw, Send, LogIn, FileText, Smartphone, Scale, Gavel } from 'lucide-react';
+import { Loader2, ArrowLeft, User, ShieldCheck, CheckCircle2, Stethoscope, GraduationCap, Mail, RefreshCw, Send, LogIn, FileText, Smartphone, Scale, Gavel, Brain } from 'lucide-react';
 import RobotMascot from './components/RobotMascot';
 import LandingPage from './components/LandingPage';
 import RightsModal from './components/RightsModal';
+import NeurodivergenceMapModal from './components/NeurodivergenceMapModal';
 import { usePWAInstall } from './hooks/usePWAInstall';
 
 
@@ -32,6 +33,7 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
   const [view, setView] = useState<AuthView>('LOGIN');
   const [showLanding, setShowLanding] = useState(false);
   const [showRights, setShowRights] = useState(false);
+  const [showNeuroMap, setShowNeuroMap] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -738,6 +740,13 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
                   >
                       <Scale className="w-3 h-3" /> Direitos e Leis (Brasil)
                   </button>
+                  <button 
+                      type="button"
+                      onClick={() => setShowNeuroMap(true)}
+                      className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-purple-600 transition-colors bg-white/50 hover:bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-100"
+                  >
+                      <Brain className="w-3 h-3 text-purple-500" /> Mapa da Neurodivergência
+                  </button>
                   <p className="text-[10px] text-slate-400 mt-4 font-bold tracking-wider text-center uppercase">
                       Desenvolvido por MichelBB | v1.1.0
                   </p>
@@ -747,6 +756,7 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess, onShowPWAHint }) => {
         )}
       </div>
       <RightsModal isOpen={showRights} onClose={() => setShowRights(false)} />
+      <NeurodivergenceMapModal isOpen={showNeuroMap} onClose={() => setShowNeuroMap(false)} />
     </div>
   );
 };
