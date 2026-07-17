@@ -111,8 +111,8 @@ const ANIMALS_DATA = [
     { name: 'Ovelha', icon: '🐑', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/sheep.mp3', color: 'bg-gray-100 text-gray-800' },
     { name: 'Porco', icon: '🐷', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/pig.mp3', color: 'bg-pink-100 text-pink-800' },
     { name: 'Pato', icon: '🦆', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/duck.mp3', color: 'bg-yellow-50 text-yellow-700' },
-    { name: 'Macaco', icon: '🐒', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/monkey.mp3', color: 'bg-stone-200 text-stone-800' },
-    { name: 'Lobo', icon: '🐺', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/wolf.mp3', color: 'bg-slate-200 text-slate-900' }
+    { name: 'Macaco', icon: '🐒', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/ape.mp3', color: 'bg-stone-200 text-stone-800' },
+    { name: 'Coruja', icon: '🦉', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/owl.mp3', color: 'bg-slate-200 text-slate-900' }
 ];
 
 // --- UTILITÁRIOS DE ÁUDIO ---
