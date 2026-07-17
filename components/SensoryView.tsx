@@ -113,7 +113,13 @@ const ANIMALS_DATA = [
     { name: 'Pato', icon: '🦆', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/duck.mp3', color: 'bg-yellow-50 text-yellow-700' },
     { name: 'Macaco', icon: '🐒', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/ape.mp3', color: 'bg-stone-200 text-stone-800' },
     { name: 'Lobo', icon: '🐺', audioUrl: '/wolf.mp3', color: 'bg-slate-200 text-slate-900' },
-    { name: 'Coruja', icon: '🦉', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/owl.mp3', color: 'bg-stone-100 text-stone-900' }
+    { name: 'Coruja', icon: '🦉', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/owl.mp3', color: 'bg-stone-100 text-stone-900' },
+    { name: 'Tigre', icon: '🐯', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/tiger.mp3', color: 'bg-orange-50 text-orange-900' },
+    { name: 'Zebra', icon: '🦓', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/zebra.mp3', color: 'bg-stone-50 text-stone-900' },
+    { name: 'Baleia', icon: '🐋', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/humpback-whale.mp3', color: 'bg-cyan-50 text-cyan-900' },
+    { name: 'Galo', icon: '🐓', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/rooster.mp3', color: 'bg-red-50 text-red-900' },
+    { name: 'Alce', icon: '🫎', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/moose.mp3', color: 'bg-amber-100 text-amber-950' },
+    { name: 'Guaxinim', icon: '🦝', audioUrl: 'https://www.google.com/logos/fnbx/animal_sounds/raccoon.mp3', color: 'bg-slate-300 text-slate-800' }
 ];
 
 // --- UTILITÁRIOS DE ÁUDIO ---
